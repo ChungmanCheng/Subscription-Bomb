@@ -1,0 +1,96 @@
+[
+    {
+        "url": "https://news.un.org/en/content/un-newsletter-subscribe",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "name": "subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.bruggpipes.com/en/newsletter-sign-up/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "tx_powermail_pi1[field][vorname]"
+                },
+                {
+                    "name": "tx_powermail_pi1[field][name]"
+                },
+                {
+                    "name": "tx_powermail_pi1[field][e_mail]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                {
+                    "value": "Mr."
+                }
+            ],
+            "checkboxes":[
+                {
+                    "name": "tx_powermail_pi1[field][datenschutzerklaerung][]"
+                }
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://news.nus.edu.sg/subscribe-to-email-newsletter/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "id": "submit_button-ppmail"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    }
+]
