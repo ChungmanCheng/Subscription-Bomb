@@ -1,5 +1,33 @@
 [
     {
+        "url": "https://www.keyence.com.sg/enews/subscribe/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "enewsEmailAddress"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "name": "subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://news.un.org/en/content/un-newsletter-subscribe",
         "verified": true,
         "input_fields": {
