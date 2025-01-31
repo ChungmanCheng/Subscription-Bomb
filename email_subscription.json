@@ -1,5 +1,35 @@
 [
     {
+        "url": "https://account.forbes.com/newsletters",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "class": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-button"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                {
+                    "value": "DailyDozen"
+                }
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://www.keyence.com.sg/enews/subscribe/",
         "verified": true,
         "input_fields": {
