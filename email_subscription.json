@@ -1,5 +1,229 @@
 [
     {
+        "url": "https://deascentiis.substack.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.attnseek.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://daily.thecore.email/subscribe",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": " Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://worldofai.beehiiv.com?ref=amazingnewsletters.com&utm_source=amazingnewsletters.com",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://the-baseline.beehiiv.com/?ref=amazingnewsletters.com&utm_source=amazingnewsletters.com",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://thisweekinreact.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email_address"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "formkit-submit"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://linkedinprompts.beehiiv.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.forstarters.co/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://www.theatlantic.com/newsletters/",
         "verified": true,
         "input_fields": {
