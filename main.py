@@ -149,7 +149,32 @@ def save_subscription_urls(data):
 def add_subscription_url():
     url = input("Enter the subscription URL: ").strip()
     data = load_subscription_urls()
-    data.append({"url": url, "verified": False})
+    data.append(
+        {
+            "url": url, 
+            "verified": False,
+            "input_fields": {
+                "email": [
+                    
+                ],
+                "username": [],
+                "phone": [],
+                "submit": [
+                    
+                ],
+                "radios": [
+                    
+                ],
+                "checkboxes":[
+                    
+                ],
+                "selections":[
+
+                ],
+                "wait": 0
+            }
+        }
+    )
     save_subscription_urls(data)
     print("URL added successfully as unverified!")
 
