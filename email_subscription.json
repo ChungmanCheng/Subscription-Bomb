@@ -1,5 +1,61 @@
 [
     {
+        "url": "https://coinbrain.beehiiv.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.insidesmallgiants.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://deascentiis.substack.com/",
         "verified": true,
         "input_fields": {
