@@ -237,8 +237,15 @@ def attack_mode():
 
 # Main menu
 def main():
+
+    verified_urls = load_subscription_urls(verified_only=True)
+    unverified_urls = load_subscription_urls(unverified_only=True)
+
+    print(f"Current verified URLs: {len(verified_urls)}")
+    print(f"Current unverified URLs: {len(unverified_urls)}")
+
     while True:
-        print("\n=== Subscription Bot ===")
+        print("=== Subscription Bot ===")
         print("1. Add Subscription URL")
         print("2. Modify Email Subscription List")
         print("3. Verify Mode (Test Unverified URLs)")
