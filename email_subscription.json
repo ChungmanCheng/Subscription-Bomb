@@ -1,5 +1,89 @@
 [
     {
+        "url": "https://nocodelandscape.beehiiv.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://newsletter.spaceknown.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.ohmyrockness.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Sign Up >"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://www.axios.com/signup/pro-rata",
         "verified": true,
         "input_fields": {
