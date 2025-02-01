@@ -1,5 +1,119 @@
 [
     {
+        "url": "https://www.axios.com/signup/pro-rata",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://salesstoic.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Start crushing it in sales..."
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://fastlane-fleet.beehiiv.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Don't miss out on the ride of a lifetime!"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://geekout.mattnavarra.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe (It's free!)"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+                {
+                    "class": "text-lp-main-signup-cta-color"
+                }
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://thehumansintheloop.substack.com/",
         "verified": true,
         "input_fields": {
