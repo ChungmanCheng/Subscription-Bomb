@@ -1,5 +1,33 @@
 [
     {
+        "url": "https://thehumansintheloop.substack.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://newsletter.betterstack.com/",
         "verified": true,
         "input_fields": {
