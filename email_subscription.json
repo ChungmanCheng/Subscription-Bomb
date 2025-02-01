@@ -1,5 +1,481 @@
 [
     {
+        "url": "https://unconventional-empires.beehiiv.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Join Us! "
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://dotnetnews.co/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "js-submit-button"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://substack.com/signup",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "primary"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://www.aididthat.com/subscribe",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://dharab.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "name": "submit"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://palealetravel.beehiiv.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://7x7.news/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://astukari.substack.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://jbrworks.substack.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://webtoolsweekly.com/",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "name": "subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://techproductivity.co",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "name": "subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://vscode.email",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "name": "subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://standardhoy.substack.com",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://www.badgerandyote.com",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Subscribe"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://insightsinnovationecon.substack.com",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://kapansrt.substack.com",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
+        "url": "https://thedonut.co/news-personality-quiz/results/?medium=email&interests=world",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "emailAddress"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "NewsQuizSubscribeBar-module--button--c5311"
+                }
+            ],
+            "radios": [
+                
+            ],
+            "checkboxes":[
+
+            ],
+            "selections":[
+
+            ],
+            "wait": 10
+        }
+    },
+    {
         "url": "https://coinbrain.beehiiv.com/",
         "verified": true,
         "input_fields": {
@@ -24,7 +500,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -52,7 +528,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -80,7 +556,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -108,7 +584,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -136,7 +612,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -164,7 +640,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -192,7 +668,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -220,7 +696,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -248,7 +724,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -276,7 +752,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -306,7 +782,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -336,7 +812,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -364,7 +840,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -392,7 +868,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -430,7 +906,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     },
     {
@@ -458,7 +934,7 @@
             "selections":[
 
             ],
-            "wait": 5
+            "wait": 10
         }
     }
 ]
