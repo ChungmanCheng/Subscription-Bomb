@@ -1,5 +1,123 @@
 [
     {
+        "url": "https://uptain.de/en/blog/how-online-shops-generate-newsletter-subscribers",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "wpforms[fields][1]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "name": "wpforms[submit]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [
+                {
+                    "name": "wpforms[fields][3][]"
+                }
+            ],
+            "selections": [],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.finnishdesignshop.com/en-us/newsletters",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "newsletter-ajax-submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.thecut.com/promo/cut-shop-newsletter-sign-up.html",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "value": "Sign up"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://www.uniqlo.com/sg/en/member/e-news/subscription",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "subscribe"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "primary"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [
+                {
+                    "name": "newsletter"
+                }
+            ],
+            "selections": [],
+            "wait": 5
+        }
+    },
+    {
+        "url": "https://newsletter.defitimes.io/about",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "name": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "subscribe-btn"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://nocodelandscape.beehiiv.com/",
         "verified": true,
         "input_fields": {
@@ -15,15 +133,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -43,15 +155,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -71,15 +177,9 @@
                     "value": "Sign Up >"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -99,15 +199,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -127,15 +221,9 @@
                     "value": "Start crushing it in sales..."
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -155,15 +243,9 @@
                     "value": "Don't miss out on the ride of a lifetime!"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -183,17 +265,13 @@
                     "value": "Subscribe (It's free!)"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
+            "radios": [],
+            "checkboxes": [
                 {
                     "class": "text-lp-main-signup-cta-color"
                 }
             ],
-            "selections":[
-
-            ],
+            "selections": [],
             "wait": 5
         }
     },
@@ -213,15 +291,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -241,15 +313,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -269,15 +335,9 @@
                     "value": "Join Us! "
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -297,15 +357,9 @@
                     "class": "js-submit-button"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -325,15 +379,9 @@
                     "class": "primary"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -353,15 +401,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -381,15 +423,9 @@
                     "name": "submit"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -409,15 +445,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -437,15 +467,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -465,15 +489,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -493,15 +511,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -521,15 +533,9 @@
                     "name": "subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -549,15 +555,9 @@
                     "name": "subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -577,15 +577,9 @@
                     "name": "subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -605,15 +599,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -633,15 +621,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -661,15 +643,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -689,15 +665,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -717,15 +687,9 @@
                     "class": "NewsQuizSubscribeBar-module--button--c5311"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -745,15 +709,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -773,15 +731,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -801,15 +753,9 @@
                     "class": "subscribe-btn"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -829,15 +775,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -857,15 +797,9 @@
                     "value": " Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -885,15 +819,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -913,15 +841,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -941,15 +863,9 @@
                     "class": "formkit-submit"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -969,15 +885,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -997,15 +907,9 @@
                     "value": "Subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -1025,17 +929,13 @@
                     "class": "NewslettersSignupBar_button__H1vw5"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
+            "radios": [],
+            "checkboxes": [
                 {
                     "class": "NewsletterCard_buttonIcon__gCltK"
                 }
             ],
-            "selections":[
-
-            ],
+            "selections": [],
             "wait": 5
         }
     },
@@ -1055,17 +955,13 @@
                     "class": "subscribe-button"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
+            "radios": [],
+            "checkboxes": [
                 {
                     "value": "DailyDozen"
                 }
             ],
-            "selections":[
-
-            ],
+            "selections": [],
             "wait": 5
         }
     },
@@ -1085,15 +981,9 @@
                     "name": "subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -1113,15 +1003,9 @@
                     "name": "subscribe"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-                
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     },
@@ -1152,14 +1036,12 @@
                     "value": "Mr."
                 }
             ],
-            "checkboxes":[
+            "checkboxes": [
                 {
                     "name": "tx_powermail_pi1[field][datenschutzerklaerung][]"
                 }
             ],
-            "selections":[
-
-            ],
+            "selections": [],
             "wait": 5
         }
     },
@@ -1179,15 +1061,9 @@
                     "id": "submit_button-ppmail"
                 }
             ],
-            "radios": [
-                
-            ],
-            "checkboxes":[
-
-            ],
-            "selections":[
-
-            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
             "wait": 5
         }
     }
