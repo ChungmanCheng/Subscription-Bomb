@@ -23,15 +23,6 @@ URL_JSON = "email_subscription.json"
 # User-Agent string to spoof
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
-# Function to initialize Selenium WebDriver with Firefox
-def get_driver():
-    options = Options()
-    options.add_argument("--headless")  # Enable headless mode
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = Firefox(options=options)
-    return driver
-
 def type_with_delay(element, text, delay=0.05):
     """
     Types the given text into the input element with a delay between each character.
@@ -203,7 +194,11 @@ def verify_mode():
         print("No unverified URLs found.")
         return
 
-    driver = get_driver()
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = Firefox(options=options)
+
     for entry in unverified_urls:
         url = entry["url"]
         for email in EMAILS:
@@ -225,7 +220,11 @@ def attack_mode():
         print("No verified URLs found.")
         return
 
-    driver = get_driver()
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = Firefox(options=options)
 
     for email in EMAILS:
         for entry in verified_urls:
