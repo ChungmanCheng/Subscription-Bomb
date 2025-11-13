@@ -1,5 +1,27 @@
 [
     {
+        "url": "https://profile.usatoday.com/newsletters/sports",
+        "verified": true,
+        "input_fields": {
+            "email": [
+                {
+                    "id": "email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "class": "primary"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "wait": 5
+        }
+    },
+    {
         "url": "https://uptain.de/en/blog/how-online-shops-generate-newsletter-subscribers",
         "verified": true,
         "input_fields": {
