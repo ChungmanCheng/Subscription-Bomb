@@ -362,6 +362,111 @@ def save_subscription_urls(data):
     with open(URL_JSON, "w") as file:
         json.dump(data, file, indent=4)
 
+
+def fetch_form_elements(url, driver):
+    """
+    Navigate to *url*, wait for JS to settle, then collect every interactive
+    form element (input, select, textarea, button).  Hidden inputs are skipped.
+    Returns a list of descriptor dicts with keys:
+        tag, type, id, name, class, placeholder, value, text, selector
+    """
+    try:
+        driver.get(url)
+        time.sleep(2)
+    except Exception as exc:
+        print(f"Failed to load {url}: {exc}")
+        return []
+
+    elements = []
+    for tag in ("input", "select", "textarea", "button"):
+        try:
+            found = driver.find_elements(By.TAG_NAME, tag)
+        except Exception:
+            continue
+        for el in found:
+            try:
+                el_type        = (el.get_attribute("type") or tag).lower()
+                el_id          = el.get_attribute("id") or ""
+                el_name        = el.get_attribute("name") or ""
+                el_class       = (el.get_attribute("class") or "").strip()
+                el_placeholder = el.get_attribute("placeholder") or ""
+                el_value       = el.get_attribute("value") or ""
+                el_text        = (el.text or "").strip()[:50]
+
+                if el_type == "hidden":
+                    continue
+
+                # Build the most specific CSS selector available
+                if el_id:
+                    css = f"#{el_id}"
+                elif el_name:
+                    css = f'{tag}[name="{el_name}"]'
+                elif el_class:
+                    first_cls = el_class.split()[0]
+                    css = f"{tag}.{first_cls}"
+                else:
+                    css = tag
+
+                elements.append({
+                    "tag":         tag,
+                    "type":        el_type,
+                    "id":          el_id,
+                    "name":        el_name,
+                    "class":       el_class,
+                    "placeholder": el_placeholder,
+                    "value":       el_value,
+                    "text":        el_text,
+                    "selector":    css,
+                })
+            except Exception:
+                continue
+    return elements
+
+
+def print_elements_table(elements):
+    """Print a numbered table of discovered form elements."""
+    print(f"\n  {'#':<4} {'TAG / TYPE':<24} {'ID':<22} {'NAME':<22} HINT")
+    print("  " + "-" * 92)
+    for i, el in enumerate(elements, start=1):
+        tag_type = f"{el['tag']}[{el['type']}]" if el["type"] not in ("", el["tag"]) else el["tag"]
+        hint     = el["placeholder"] or el["text"] or el["value"]
+        print(f"  {i:<4} {tag_type:<24} {el['id']:<22} {el['name']:<22} {hint[:28]}")
+    print()
+
+
+def pick_selectors_interactively(elements, prompt, fallback_default=""):
+    """
+    Ask the user to pick form elements by number(s) or type raw CSS.
+    - Numbers: "1" or "1,3,5"  → maps to elements[n-1]["selector"]
+    - Anything else             → treated as raw comma-separated CSS
+    - Blank                     → uses fallback_default (if given)
+    Returns a list of {"css": "..."} dicts.
+    """
+    if elements:
+        print_elements_table(elements)
+
+    hint = f" [default: {fallback_default}]" if fallback_default else " (optional)"
+    raw = input(f"  {prompt}{hint}\n  > ").strip()
+
+    if not raw:
+        return parse_css_selector_list(fallback_default) if fallback_default else []
+
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    if all(p.isdigit() for p in parts):
+        result = []
+        for p in parts:
+            idx = int(p) - 1
+            if 0 <= idx < len(elements):
+                result.append({"css": elements[idx]["selector"]})
+                print(f"    ✔ Selected: {elements[idx]['selector']}")
+            else:
+                print(f"    ⚠ Index {p} out of range, skipped.")
+        return result
+
+    # Raw CSS fallback
+    return parse_css_selector_list(raw)
+
+
 # Add new subscription URLs to JSON file
 def add_subscription_url():
     url = choose_subscription_url()
@@ -374,20 +479,34 @@ def add_subscription_url():
         print("URL already exists in list.")
         return
 
-    print("Enter CSS selectors separated by commas.")
-    print("Example: input[type='email'], #email")
+    # --- Open browser and scrape all form elements ---
+    print("\nOpening browser to inspect form elements…")
+    driver = create_driver(headless=False)
+    elements = fetch_form_elements(url, driver)
+    driver.quit()
 
-    email_selectors = input("Email field selector(s) [default: input[type='email']]: ").strip()
-    submit_selectors = input("Submit selector(s) [default: button[type='submit'], input[type='submit']]: ").strip()
-    checkbox_selectors = input("Checkbox selector(s) (optional): ").strip()
-    radio_selectors = input("Radio selector(s) (optional): ").strip()
-    wait_seconds_raw = input("Wait seconds after submit [default 0]: ").strip()
+    if not elements:
+        print("No form elements detected – falling back to manual CSS entry.")
 
-    if not email_selectors:
-        email_selectors = "input[type='email']"
-    if not submit_selectors:
-        submit_selectors = "button[type='submit'], input[type='submit']"
+    # Categorise for focused sub-lists
+    email_els    = [e for e in elements if e["type"] in ("email", "text", "textarea")]
+    submit_els   = [e for e in elements if e["type"] in ("submit", "button") or e["tag"] == "button"]
+    checkbox_els = [e for e in elements if e["type"] == "checkbox"]
+    radio_els    = [e for e in elements if e["type"] == "radio"]
 
+    print("\n=== Assign form fields for this URL ===")
+    print("Enter element number(s) from the table, raw CSS, or press Enter for the default.\n")
+
+    email_fields    = pick_selectors_interactively(
+        email_els,    "EMAIL input field(s)",   "input[type='email']")
+    submit_fields   = pick_selectors_interactively(
+        submit_els,   "SUBMIT button(s)",       "button[type='submit'], input[type='submit']")
+    checkbox_fields = pick_selectors_interactively(
+        checkbox_els, "CHECKBOX(es) to tick")
+    radio_fields    = pick_selectors_interactively(
+        radio_els,    "RADIO button(s) to select")
+
+    wait_seconds_raw = input("\n  Wait seconds after submit [default 0]: ").strip()
     try:
         wait_seconds = int(wait_seconds_raw) if wait_seconds_raw else 0
     except ValueError:
@@ -395,33 +514,30 @@ def add_subscription_url():
 
     print("\n--- IMAP Inbox Verification Hints (optional) ---")
     print("These help narrow down which email counts as a confirmation.")
-    sender_hint = input("Sender hint (e.g. newsletter, noreply@example.com): ").strip()
+    sender_hint  = input("Sender hint (e.g. noreply@example.com): ").strip()
     subject_hint = input("Subject hint (e.g. confirm, verify, welcome): ").strip()
 
-    data.append(
-        {
-            "url": url,
-            "verified": False,
-            "verification": {
-                "sender_hint": sender_hint,
-                "subject_hint": subject_hint,
-            },
-            "input_fields": {
-                "email": parse_css_selector_list(email_selectors),
-                "username": [],
-                "phone": [],
-                "submit": parse_css_selector_list(submit_selectors),
-                "radios": parse_css_selector_list(radio_selectors),
-                "checkboxes": parse_css_selector_list(checkbox_selectors),
-                "selections":[
-
-                ],
-                "wait": wait_seconds
-            }
+    data.append({
+        "url": url,
+        "verified": False,
+        "verification": {
+            "sender_hint":  sender_hint,
+            "subject_hint": subject_hint,
+        },
+        "input_fields": {
+            "email":      email_fields,
+            "username":   [],
+            "phone":      [],
+            "submit":     submit_fields,
+            "radios":     radio_fields,
+            "checkboxes": checkbox_fields,
+            "selections": [],
+            "wait":       wait_seconds,
         }
-    )
+    })
     save_subscription_urls(data)
     print("URL added successfully as unverified!")
+
 
 # Modify subscription file (manual verification)
 def modify_subscription_file():
