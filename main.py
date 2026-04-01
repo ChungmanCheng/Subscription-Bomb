@@ -2,6 +2,11 @@ import os
 import json
 import time
 import random
+import imaplib
+import email
+from email.header import decode_header
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from undetected_geckodriver import Firefox
@@ -18,6 +23,116 @@ URL_JSON = "email_subscription.json"
 
 # User-Agent string to spoof
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
+SEARCH_API_URL = os.getenv("SEARCH_API_URL", "").strip()
+SEARCH_API_KEY = os.getenv("SEARCH_API_KEY", "").strip()
+SEARCH_API_KEY_HEADER = os.getenv("SEARCH_API_KEY_HEADER", "X-API-Key").strip() or "X-API-Key"
+SEARCH_API_QUERY_PARAM = os.getenv("SEARCH_API_QUERY_PARAM", "q").strip() or "q"
+SEARCH_API_RESULTS_PATH = os.getenv("SEARCH_API_RESULTS_PATH", "results").strip() or "results"
+SEARCH_API_URL_FIELD = os.getenv("SEARCH_API_URL_FIELD", "url").strip() or "url"
+
+# IMAP configuration for inbox verification
+IMAP_HOST = os.getenv("IMAP_HOST", "").strip()
+IMAP_PORT = int(os.getenv("IMAP_PORT", "993").strip() or "993")
+IMAP_USER = os.getenv("IMAP_USER", "").strip()
+IMAP_PASS = os.getenv("IMAP_PASS", "").strip()
+IMAP_FOLDER = os.getenv("IMAP_FOLDER", "INBOX").strip() or "INBOX"
+IMAP_TIMEOUT = int(os.getenv("IMAP_TIMEOUT", "60").strip() or "60")
+
+def get_inbox_uids():
+    """
+    Connect to the configured IMAP server and return the current set of
+    message sequence numbers as a set of bytes.  Returns None if IMAP is
+    not configured or the connection fails.
+    """
+    if not all([IMAP_HOST, IMAP_USER, IMAP_PASS]):
+        return None
+    try:
+        mail = imaplib.IMAP4_SSL(IMAP_HOST, IMAP_PORT)
+        mail.login(IMAP_USER, IMAP_PASS)
+        mail.select(IMAP_FOLDER, readonly=True)
+        _, data = mail.search(None, "ALL")
+        mail.logout()
+        return set(data[0].split()) if data and data[0] else set()
+    except Exception as exc:
+        print(f"[IMAP] Snapshot failed: {exc}")
+        return None
+
+
+def check_inbox_for_new_email(known_uids, sender_hint="", subject_hint="",
+                               timeout=None, poll_interval=10):
+    """
+    Poll the IMAP inbox until a new email appears that was not present in
+    *known_uids*.  Optionally filters messages by *sender_hint* (substring
+    matched against the From header) and *subject_hint* (substring matched
+    against the decoded Subject header).
+
+    Returns True if a qualifying new email is found before *timeout* seconds
+    elapse, False otherwise.  If IMAP is not configured, returns False and
+    prints a warning so the caller can decide what to do.
+    """
+    if not all([IMAP_HOST, IMAP_USER, IMAP_PASS]):
+        print("[IMAP] Not configured – skipping inbox check.")
+        return False
+    if known_uids is None:
+        print("[IMAP] No snapshot available – skipping inbox check.")
+        return False
+
+    effective_timeout = timeout if timeout is not None else IMAP_TIMEOUT
+    deadline = time.time() + effective_timeout
+
+    while time.time() < deadline:
+        try:
+            mail = imaplib.IMAP4_SSL(IMAP_HOST, IMAP_PORT)
+            mail.login(IMAP_USER, IMAP_PASS)
+            mail.select(IMAP_FOLDER, readonly=True)
+            _, data = mail.search(None, "ALL")
+            current_uids = set(data[0].split()) if data and data[0] else set()
+            new_uids = current_uids - known_uids
+
+            for uid in new_uids:
+                _, msg_data = mail.fetch(uid, "(RFC822)")
+                if not msg_data or not msg_data[0]:
+                    continue
+                msg = email.message_from_bytes(msg_data[0][1])
+                from_header = msg.get("From", "")
+
+                # Decode subject properly
+                raw_subject = msg.get("Subject", "")
+                subject_parts = decode_header(raw_subject)
+                subject = ""
+                for part, enc in subject_parts:
+                    if isinstance(part, bytes):
+                        subject += part.decode(enc or "utf-8", errors="replace")
+                    else:
+                        subject += part
+
+                # Apply optional hints as substring filters
+                if sender_hint and sender_hint.lower() not in from_header.lower():
+                    continue
+                if subject_hint and subject_hint.lower() not in subject.lower():
+                    continue
+
+                print(f"[IMAP] Confirmation email received!")
+                print(f"       From: {from_header}")
+                print(f"       Subject: {subject}")
+                mail.logout()
+                return True
+
+            mail.logout()
+        except Exception as exc:
+            print(f"[IMAP] Polling error: {exc}")
+
+        remaining = deadline - time.time()
+        if remaining > 0:
+            wait = min(poll_interval, remaining)
+            print(f"[IMAP] No new email yet – checking again in {wait:.0f}s "
+                  f"({remaining:.0f}s remaining)...")
+            time.sleep(wait)
+
+    print("[IMAP] Timed out waiting for confirmation email.")
+    return False
+
 
 def selector_from_config(field_config):
     """
@@ -46,6 +161,88 @@ def selector_from_config(field_config):
 
 def parse_css_selector_list(raw_input):
     return [{"css": selector.strip()} for selector in raw_input.split(",") if selector.strip()]
+
+def get_nested_value(data, path):
+    current = data
+    for part in path.split("."):
+        if isinstance(current, list):
+            try:
+                current = current[int(part)]
+            except (ValueError, IndexError):
+                return None
+        elif isinstance(current, dict):
+            current = current.get(part)
+        else:
+            return None
+
+        if current is None:
+            return None
+    return current
+
+def search_subscription_urls(query, limit=5):
+    if not SEARCH_API_URL:
+        print("Search API is not configured. Set SEARCH_API_URL in .env first.")
+        return []
+
+    params = {SEARCH_API_QUERY_PARAM: query}
+    request_url = f"{SEARCH_API_URL}?{urlencode(params)}"
+    headers = {"User-Agent": USER_AGENT}
+    if SEARCH_API_KEY:
+        headers[SEARCH_API_KEY_HEADER] = SEARCH_API_KEY
+
+    try:
+        request = Request(request_url, headers=headers)
+        with urlopen(request, timeout=15) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception as exc:
+        print(f"Search API request failed: {exc}")
+        return []
+
+    raw_results = get_nested_value(payload, SEARCH_API_RESULTS_PATH)
+    if not isinstance(raw_results, list):
+        print("Search API response did not contain a result list.")
+        return []
+
+    urls = []
+    for item in raw_results:
+        if not isinstance(item, dict):
+            continue
+        result_url = get_nested_value(item, SEARCH_API_URL_FIELD)
+        if isinstance(result_url, str) and result_url.strip():
+            urls.append(result_url.strip())
+        if len(urls) >= limit:
+            break
+
+    return urls
+
+def choose_subscription_url():
+    mode = input("Choose URL source: [1] Manual URL, [2] Search API: ").strip() or "1"
+    if mode == "2":
+        query = input("Enter search query: ").strip()
+        if not query:
+            print("Search query cannot be empty.")
+            return None
+
+        results = search_subscription_urls(query)
+        if not results:
+            print("No URLs returned from search API.")
+            return None
+
+        print("Search results:")
+        for index, result_url in enumerate(results, start=1):
+            print(f"{index}. {result_url}")
+
+        selected = input("Choose a result number, or press Enter to cancel: ").strip()
+        if not selected:
+            return None
+
+        try:
+            return results[int(selected) - 1]
+        except (ValueError, IndexError):
+            print("Invalid selection.")
+            return None
+
+    return input("Enter the subscription URL: ").strip()
 
 def create_driver(headless=False):
     options = Options()
@@ -148,7 +345,7 @@ def save_subscription_urls(data):
 
 # Add new subscription URLs to JSON file
 def add_subscription_url():
-    url = input("Enter the subscription URL: ").strip()
+    url = choose_subscription_url()
     if not url:
         print("URL cannot be empty.")
         return
@@ -177,10 +374,19 @@ def add_subscription_url():
     except ValueError:
         wait_seconds = 0
 
+    print("\n--- IMAP Inbox Verification Hints (optional) ---")
+    print("These help narrow down which email counts as a confirmation.")
+    sender_hint = input("Sender hint (e.g. newsletter, noreply@example.com): ").strip()
+    subject_hint = input("Subject hint (e.g. confirm, verify, welcome): ").strip()
+
     data.append(
         {
-            "url": url, 
+            "url": url,
             "verified": False,
+            "verification": {
+                "sender_hint": sender_hint,
+                "subject_hint": subject_hint,
+            },
             "input_fields": {
                 "email": parse_css_selector_list(email_selectors),
                 "username": [],
@@ -248,17 +454,48 @@ def verify_mode():
         print("No unverified URLs found.")
         return
 
+    imap_enabled = all([IMAP_HOST, IMAP_USER, IMAP_PASS])
+    if imap_enabled:
+        print(f"[IMAP] Inbox verification enabled (host={IMAP_HOST}, folder={IMAP_FOLDER}, "
+              f"timeout={IMAP_TIMEOUT}s).")
+    else:
+        print("[IMAP] IMAP not configured – verification will rely on form-submit success only.")
+
     driver = create_driver(headless=False)
 
     any_changed = False
     for entry in unverified_urls:
         url = entry["url"]
+        verification = entry.get("verification", {})
+        sender_hint = verification.get("sender_hint", "")
+        subject_hint = verification.get("subject_hint", "")
         verified_now = False
-        for email in EMAILS:
-            success = subscribe_email(email, url.strip(), entry.get("input_fields", {}), driver)
+
+        for email_addr in EMAILS:
+            # ── Snapshot the inbox BEFORE submitting the form ──────────────
+            known_uids = get_inbox_uids() if imap_enabled else None
+
+            success = subscribe_email(email_addr, url.strip(), entry.get("input_fields", {}), driver)
+
             if success:
-                verified_now = True
-                print(f"URL verified: {url}")
+                if imap_enabled:
+                    print(f"[IMAP] Form submitted for {url} – polling inbox for confirmation…")
+                    inbox_confirmed = check_inbox_for_new_email(
+                        known_uids,
+                        sender_hint=sender_hint,
+                        subject_hint=subject_hint,
+                    )
+                    if inbox_confirmed:
+                        verified_now = True
+                        print(f"[IMAP] URL verified via inbox: {url}")
+                    else:
+                        print(f"[IMAP] No confirmation email received for {url}")
+                else:
+                    # Fallback: treat a successful form submission as verified
+                    verified_now = True
+                    print(f"URL verified (form submit): {url}")
+
+            if verified_now:
                 break
 
         if verified_now:
