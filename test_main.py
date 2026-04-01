@@ -539,6 +539,131 @@ class TestModifySubscriptionFile:
             self.m.modify_subscription_file()  # should not raise
 
 
+# ===========================================================================
+# 11. fetch_form_elements
+# ===========================================================================
+
+def _make_mock_element(tag, el_type="", el_id="", name="", cls="",
+                        placeholder="", value="", text=""):
+    el = MagicMock()
+    el.get_attribute.side_effect = lambda attr: {
+        "type": el_type, "id": el_id, "name": name,
+        "class": cls, "placeholder": placeholder, "value": value,
+    }.get(attr, "")
+    el.text = text
+    return el
+
+
+class TestFetchFormElements:
+    def setup_method(self):
+        self.m = _import_main()
+
+    def test_returns_empty_on_driver_get_failure(self):
+        driver = MagicMock()
+        driver.get.side_effect = Exception("load error")
+        assert self.m.fetch_form_elements("https://x.com", driver) == []
+
+    def test_skips_hidden_inputs(self):
+        hidden = _make_mock_element("input", el_type="hidden", name="csrf")
+        driver = MagicMock()
+        driver.find_elements.side_effect = lambda by, tag: [hidden] if tag == "input" else []
+        with patch("time.sleep"):
+            result = self.m.fetch_form_elements("https://x.com", driver)
+        assert result == []
+
+    def test_detects_email_input(self):
+        el = _make_mock_element("input", el_type="email", el_id="email-field")
+        driver = MagicMock()
+        driver.find_elements.side_effect = lambda by, tag: [el] if tag == "input" else []
+        with patch("time.sleep"):
+            result = self.m.fetch_form_elements("https://x.com", driver)
+        assert len(result) == 1
+        assert result[0]["type"] == "email"
+        assert result[0]["selector"] == "#email-field"
+
+    def test_selector_falls_back_to_name(self):
+        el = _make_mock_element("input", el_type="text", name="subscribe")
+        driver = MagicMock()
+        driver.find_elements.side_effect = lambda by, tag: [el] if tag == "input" else []
+        with patch("time.sleep"):
+            result = self.m.fetch_form_elements("https://x.com", driver)
+        assert result[0]["selector"] == 'input[name="subscribe"]'
+
+    def test_selector_falls_back_to_first_class(self):
+        el = _make_mock_element("button", el_type="button", cls="btn primary")
+        driver = MagicMock()
+        driver.find_elements.side_effect = lambda by, tag: [el] if tag == "button" else []
+        with patch("time.sleep"):
+            result = self.m.fetch_form_elements("https://x.com", driver)
+        assert result[0]["selector"] == "button.btn"
+
+    def test_collects_multiple_tags(self):
+        inp = _make_mock_element("input", el_type="text", el_id="q")
+        btn = _make_mock_element("button", el_type="submit", el_id="go")
+        driver = MagicMock()
+        driver.find_elements.side_effect = lambda by, tag: (
+            [inp] if tag == "input" else [btn] if tag == "button" else []
+        )
+        with patch("time.sleep"):
+            result = self.m.fetch_form_elements("https://x.com", driver)
+        tags = [r["tag"] for r in result]
+        assert "input" in tags and "button" in tags
+
+
+# ===========================================================================
+# 12. pick_selectors_interactively
+# ===========================================================================
+
+SAMPLE_ELEMENTS = [
+    {"tag": "input", "type": "email", "id": "email",  "name": "", "class": "",
+     "placeholder": "Your email", "value": "", "text": "", "selector": "#email"},
+    {"tag": "button", "type": "submit", "id": "", "name": "", "class": "btn",
+     "placeholder": "", "value": "", "text": "Subscribe", "selector": "button.btn"},
+    {"tag": "input", "type": "checkbox", "id": "", "name": "agree", "class": "",
+     "placeholder": "", "value": "1", "text": "", "selector": 'input[name="agree"]'},
+]
+
+
+class TestPickSelectorsInteractively:
+    def setup_method(self):
+        self.m = _import_main()
+
+    def test_blank_input_returns_default(self):
+        with patch("builtins.input", return_value=""):
+            result = self.m.pick_selectors_interactively([], "", "input[type='email']")
+        assert result == [{"css": "input[type='email']"}]
+
+    def test_blank_input_no_default_returns_empty(self):
+        with patch("builtins.input", return_value=""):
+            result = self.m.pick_selectors_interactively([], "")
+        assert result == []
+
+    def test_number_maps_to_element_selector(self):
+        with patch("builtins.input", return_value="1"):
+            result = self.m.pick_selectors_interactively(SAMPLE_ELEMENTS, "Email")
+        assert result == [{"css": "#email"}]
+
+    def test_multiple_numbers(self):
+        with patch("builtins.input", return_value="1,2"):
+            result = self.m.pick_selectors_interactively(SAMPLE_ELEMENTS, "Fields")
+        assert result == [{"css": "#email"}, {"css": "button.btn"}]
+
+    def test_out_of_range_index_skipped(self):
+        with patch("builtins.input", return_value="99"):
+            result = self.m.pick_selectors_interactively(SAMPLE_ELEMENTS, "Fields")
+        assert result == []
+
+    def test_raw_css_string_passed_through(self):
+        with patch("builtins.input", return_value="input.my-email"):
+            result = self.m.pick_selectors_interactively(SAMPLE_ELEMENTS, "Email")
+        assert result == [{"css": "input.my-email"}]
+
+    def test_raw_css_multiple(self):
+        with patch("builtins.input", return_value="button[type='submit'], input[type='submit']"):
+            result = self.m.pick_selectors_interactively(SAMPLE_ELEMENTS, "Submit")
+        assert len(result) == 2
+
+
 if __name__ == "__main__":
     import pytest
     raise SystemExit(pytest.main([__file__, "-v"]))

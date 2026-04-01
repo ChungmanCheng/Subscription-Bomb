@@ -1088,5 +1088,35 @@
             "selections": [],
             "wait": 5
         }
+    },
+    {
+        "url": "https://snipcart.com/blog/ad-blockers-saas-web-developers",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[type='email']"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.button-submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [
+                {
+                    "css": "#site-newsletter-interestProduct"
+                }
+            ],
+            "selections": [],
+            "wait": 5
+        }
     }
 ]
