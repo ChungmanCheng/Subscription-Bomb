@@ -26,7 +26,9 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 SEARCH_API_URL = os.getenv("SEARCH_API_URL", "").strip()
 SEARCH_API_KEY = os.getenv("SEARCH_API_KEY", "").strip()
+SEARCH_API_METHOD = os.getenv("SEARCH_API_METHOD", "GET").strip().upper() or "GET"
 SEARCH_API_KEY_HEADER = os.getenv("SEARCH_API_KEY_HEADER", "X-API-Key").strip() or "X-API-Key"
+SEARCH_API_KEY_BODY_FIELD = os.getenv("SEARCH_API_KEY_BODY_FIELD", "").strip()
 SEARCH_API_QUERY_PARAM = os.getenv("SEARCH_API_QUERY_PARAM", "q").strip() or "q"
 SEARCH_API_RESULTS_PATH = os.getenv("SEARCH_API_RESULTS_PATH", "results").strip() or "results"
 SEARCH_API_URL_FIELD = os.getenv("SEARCH_API_URL_FIELD", "url").strip() or "url"
@@ -184,14 +186,31 @@ def search_subscription_urls(query, limit=5):
         print("Search API is not configured. Set SEARCH_API_URL in .env first.")
         return []
 
-    params = {SEARCH_API_QUERY_PARAM: query}
-    request_url = f"{SEARCH_API_URL}?{urlencode(params)}"
     headers = {"User-Agent": USER_AGENT}
-    if SEARCH_API_KEY:
-        headers[SEARCH_API_KEY_HEADER] = SEARCH_API_KEY
+
+    if SEARCH_API_METHOD == "POST":
+        # POST with JSON body (e.g. Tavily)
+        body = {SEARCH_API_QUERY_PARAM: query}
+        if SEARCH_API_KEY and SEARCH_API_KEY_BODY_FIELD:
+            body[SEARCH_API_KEY_BODY_FIELD] = SEARCH_API_KEY
+        elif SEARCH_API_KEY:
+            headers[SEARCH_API_KEY_HEADER] = SEARCH_API_KEY
+        headers["Content-Type"] = "application/json"
+        request = Request(
+            SEARCH_API_URL,
+            data=json.dumps(body).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+    else:
+        # GET with query string (default)
+        params = {SEARCH_API_QUERY_PARAM: query}
+        request_url = f"{SEARCH_API_URL}?{urlencode(params)}"
+        if SEARCH_API_KEY:
+            headers[SEARCH_API_KEY_HEADER] = SEARCH_API_KEY
+        request = Request(request_url, headers=headers)
 
     try:
-        request = Request(request_url, headers=headers)
         with urlopen(request, timeout=15) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except Exception as exc:
