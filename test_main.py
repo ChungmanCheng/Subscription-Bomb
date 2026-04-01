@@ -1,27 +1,43 @@
 """
-Unit tests for main.py
+Unit tests for the Subscription Bot modules.
 Run with:  pytest test_main.py -v
+           python3 test_main.py
 """
 import json
 import os
 import sys
 import time
-import types
-import importlib
 import email as email_module
 from email.mime.text import MIMEText
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 # ---------------------------------------------------------------------------
-# Helpers to import main without triggering Selenium / dotenv side-effects
+# Controlled import helper
 # ---------------------------------------------------------------------------
+# All project modules read env vars at import time, so we stub dotenv and
+# Selenium before importing, then force a fresh import each test method.
 
-def _import_main(env_overrides=None):
+_PROJECT_MODULES = (
+    "config", "imap_utils", "selector_utils",
+    "browser", "search_api", "storage", "modes", "main",
+)
+
+def _stub_heavy_deps():
+    for mod in ("selenium", "selenium.webdriver", "selenium.webdriver.common",
+                "selenium.webdriver.common.by", "selenium.webdriver.firefox",
+                "selenium.webdriver.firefox.options", "undetected_geckodriver",
+                "dotenv"):
+        if mod not in sys.modules:
+            sys.modules[mod] = MagicMock()
+    sys.modules["dotenv"].load_dotenv = lambda: None
+
+
+def _fresh_import(module_name: str, env_overrides: dict | None = None):
     """
-    Import (or re-import) main with a controlled environment so tests are
-    isolated from the real .env and from Selenium.
+    Import *module_name* (and all project siblings) under a controlled env.
+    Returns the freshly imported module.
     """
     base_env = {
         "EMAILS": "test@example.com",
@@ -44,22 +60,11 @@ def _import_main(env_overrides=None):
         base_env.update(env_overrides)
 
     with patch.dict(os.environ, base_env, clear=True):
-        # Stub heavy deps so the import doesn't fail in CI / headless env
-        for mod in ("selenium", "selenium.webdriver", "selenium.webdriver.common",
-                    "selenium.webdriver.common.by", "selenium.webdriver.firefox",
-                    "selenium.webdriver.firefox.options", "undetected_geckodriver",
-                    "dotenv"):
-            if mod not in sys.modules:
-                sys.modules[mod] = MagicMock()
-
-        # Stub load_dotenv so it doesn't overwrite our controlled env
-        sys.modules["dotenv"].load_dotenv = lambda: None
-
-        # Force fresh import
-        if "main" in sys.modules:
-            del sys.modules["main"]
-        import main as m
-        return m
+        _stub_heavy_deps()
+        for m in _PROJECT_MODULES:
+            sys.modules.pop(m, None)
+        mod = __import__(module_name)
+    return mod
 
 
 # ===========================================================================
@@ -68,7 +73,7 @@ def _import_main(env_overrides=None):
 
 class TestSelectorFromConfig:
     def setup_method(self):
-        self.m = _import_main()
+        self.m = _fresh_import("selector_utils")
 
     def test_raw_css_returned_directly(self):
         assert self.m.selector_from_config({"css": "input[type='email']"}) == "input[type='email']"
@@ -104,7 +109,7 @@ class TestSelectorFromConfig:
 
 class TestParseCssSelectorList:
     def setup_method(self):
-        self.m = _import_main()
+        self.m = _fresh_import("selector_utils")
 
     def test_single_selector(self):
         result = self.m.parse_css_selector_list("input[type='email']")
@@ -129,7 +134,7 @@ class TestParseCssSelectorList:
 
 class TestGetNestedValue:
     def setup_method(self):
-        self.m = _import_main()
+        self.m = _fresh_import("selector_utils")
 
     def test_simple_key(self):
         assert self.m.get_nested_value({"a": 1}, "a") == 1
@@ -162,7 +167,7 @@ SAMPLE_DATA = [
 
 class TestLoadSaveSubscriptionUrls:
     def setup_method(self, _):
-        self.m = _import_main()
+        self.m = _fresh_import("storage")
 
     def _make_json(self, tmp_path, data):
         p = tmp_path / "subs.json"
@@ -205,12 +210,14 @@ class TestLoadSaveSubscriptionUrls:
 
 class TestSearchSubscriptionUrlsGet:
     def setup_method(self):
-        self.m = _import_main({"SEARCH_API_URL": "https://api.example.com/search",
-                                "SEARCH_API_KEY": "key123",
-                                "SEARCH_API_METHOD": "GET",
-                                "SEARCH_API_QUERY_PARAM": "q",
-                                "SEARCH_API_RESULTS_PATH": "results",
-                                "SEARCH_API_URL_FIELD": "url"})
+        self.m = _fresh_import("search_api", {
+            "SEARCH_API_URL": "https://api.example.com/search",
+            "SEARCH_API_KEY": "key123",
+            "SEARCH_API_METHOD": "GET",
+            "SEARCH_API_QUERY_PARAM": "q",
+            "SEARCH_API_RESULTS_PATH": "results",
+            "SEARCH_API_URL_FIELD": "url",
+        })
 
     def _mock_response(self, payload):
         resp = MagicMock()
@@ -221,13 +228,13 @@ class TestSearchSubscriptionUrlsGet:
 
     def test_returns_urls_from_results(self):
         payload = {"results": [{"url": "https://x.com"}, {"url": "https://y.com"}]}
-        with patch("main.urlopen", return_value=self._mock_response(payload)):
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletter")
         assert urls == ["https://x.com", "https://y.com"]
 
     def test_respects_limit(self):
         payload = {"results": [{"url": f"https://site{i}.com"} for i in range(10)]}
-        with patch("main.urlopen", return_value=self._mock_response(payload)):
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletter", limit=3)
         assert len(urls) == 3
 
@@ -236,13 +243,13 @@ class TestSearchSubscriptionUrlsGet:
         assert self.m.search_subscription_urls("newsletter") == []
 
     def test_network_error_returns_empty(self):
-        with patch("main.urlopen", side_effect=Exception("timeout")):
+        with patch("search_api.urlopen", side_effect=Exception("timeout")):
             urls = self.m.search_subscription_urls("newsletter")
         assert urls == []
 
     def test_non_list_results_returns_empty(self):
         payload = {"results": "not-a-list"}
-        with patch("main.urlopen", return_value=self._mock_response(payload)):
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletter")
         assert urls == []
 
@@ -253,7 +260,7 @@ class TestSearchSubscriptionUrlsGet:
 
 class TestSearchSubscriptionUrlsPost:
     def setup_method(self):
-        self.m = _import_main({
+        self.m = _fresh_import("search_api", {
             "SEARCH_API_URL": "https://api.tavily.com/search",
             "SEARCH_API_KEY": "tvly-key",
             "SEARCH_API_METHOD": "POST",
@@ -272,7 +279,7 @@ class TestSearchSubscriptionUrlsPost:
 
     def test_sends_post_with_json_body(self):
         payload = {"results": [{"url": "https://example.com"}]}
-        with patch("main.urlopen", return_value=self._mock_response(payload)) as mock_open:
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)) as mock_open:
             self.m.search_subscription_urls("test query")
             req = mock_open.call_args[0][0]
             body = json.loads(req.data.decode())
@@ -281,7 +288,7 @@ class TestSearchSubscriptionUrlsPost:
 
     def test_returns_urls_from_post_response(self):
         payload = {"results": [{"url": "https://a.com"}, {"url": "https://b.com"}]}
-        with patch("main.urlopen", return_value=self._mock_response(payload)):
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletters")
         assert urls == ["https://a.com", "https://b.com"]
 
@@ -292,7 +299,7 @@ class TestSearchSubscriptionUrlsPost:
 
 class TestGetInboxUids:
     def setup_method(self):
-        self.m = _import_main({
+        self.m = _fresh_import("imap_utils", {
             "IMAP_HOST": "imap.example.com",
             "IMAP_USER": "user@example.com",
             "IMAP_PASS": "pass",
@@ -306,19 +313,19 @@ class TestGetInboxUids:
     def test_returns_set_of_uids(self):
         mock_mail = MagicMock()
         mock_mail.search.return_value = ("OK", [b"1 2 3"])
-        with patch("imaplib.IMAP4_SSL", return_value=mock_mail):
+        with patch("imap_utils.imaplib.IMAP4_SSL", return_value=mock_mail):
             uids = self.m.get_inbox_uids()
         assert uids == {b"1", b"2", b"3"}
 
     def test_returns_empty_set_for_empty_inbox(self):
         mock_mail = MagicMock()
         mock_mail.search.return_value = ("OK", [b""])
-        with patch("imaplib.IMAP4_SSL", return_value=mock_mail):
+        with patch("imap_utils.imaplib.IMAP4_SSL", return_value=mock_mail):
             uids = self.m.get_inbox_uids()
         assert uids == set()
 
     def test_returns_none_on_exception(self):
-        with patch("imaplib.IMAP4_SSL", side_effect=Exception("connection refused")):
+        with patch("imap_utils.imaplib.IMAP4_SSL", side_effect=Exception("connection refused")):
             assert self.m.get_inbox_uids() is None
 
 
@@ -335,7 +342,7 @@ def _make_raw_email(from_addr, subject):
 
 class TestCheckInboxForNewEmail:
     def setup_method(self):
-        self.m = _import_main({
+        self.m = _fresh_import("imap_utils", {
             "IMAP_HOST": "imap.example.com",
             "IMAP_USER": "user@example.com",
             "IMAP_PASS": "pass",
@@ -355,7 +362,7 @@ class TestCheckInboxForNewEmail:
         mock_mail = MagicMock()
         mock_mail.search.return_value = ("OK", [b"1 2"])
         mock_mail.fetch.return_value = ("OK", [(None, raw)])
-        with patch("imaplib.IMAP4_SSL", return_value=mock_mail):
+        with patch("imap_utils.imaplib.IMAP4_SSL", return_value=mock_mail):
             result = self.m.check_inbox_for_new_email(
                 known_uids={b"1"}, timeout=5, poll_interval=1
             )
@@ -366,7 +373,7 @@ class TestCheckInboxForNewEmail:
         mock_mail = MagicMock()
         mock_mail.search.return_value = ("OK", [b"1 2"])
         mock_mail.fetch.return_value = ("OK", [(None, raw)])
-        with patch("imaplib.IMAP4_SSL", return_value=mock_mail):
+        with patch("imap_utils.imaplib.IMAP4_SSL", return_value=mock_mail):
             with patch("time.sleep"):
                 result = self.m.check_inbox_for_new_email(
                     known_uids={b"1"},
@@ -381,7 +388,7 @@ class TestCheckInboxForNewEmail:
         mock_mail = MagicMock()
         mock_mail.search.return_value = ("OK", [b"1 2"])
         mock_mail.fetch.return_value = ("OK", [(None, raw)])
-        with patch("imaplib.IMAP4_SSL", return_value=mock_mail):
+        with patch("imap_utils.imaplib.IMAP4_SSL", return_value=mock_mail):
             with patch("time.sleep"):
                 result = self.m.check_inbox_for_new_email(
                     known_uids={b"1"},
@@ -396,7 +403,7 @@ class TestCheckInboxForNewEmail:
         mock_mail = MagicMock()
         mock_mail.search.return_value = ("OK", [b"1 2"])
         mock_mail.fetch.return_value = ("OK", [(None, raw)])
-        with patch("imaplib.IMAP4_SSL", return_value=mock_mail):
+        with patch("imap_utils.imaplib.IMAP4_SSL", return_value=mock_mail):
             result = self.m.check_inbox_for_new_email(
                 known_uids={b"1"},
                 subject_hint="welcome",
@@ -408,7 +415,7 @@ class TestCheckInboxForNewEmail:
     def test_times_out_when_no_new_email(self):
         mock_mail = MagicMock()
         mock_mail.search.return_value = ("OK", [b"1"])
-        with patch("imaplib.IMAP4_SSL", return_value=mock_mail):
+        with patch("imap_utils.imaplib.IMAP4_SSL", return_value=mock_mail):
             with patch("time.sleep"):
                 result = self.m.check_inbox_for_new_email(
                     known_uids={b"1"}, timeout=0, poll_interval=1
@@ -416,7 +423,7 @@ class TestCheckInboxForNewEmail:
         assert result is False
 
     def test_returns_false_on_imap_exception(self):
-        with patch("imaplib.IMAP4_SSL", side_effect=Exception("error")):
+        with patch("imap_utils.imaplib.IMAP4_SSL", side_effect=Exception("error")):
             with patch("time.sleep"):
                 result = self.m.check_inbox_for_new_email(
                     known_uids={b"1"}, timeout=0, poll_interval=1
@@ -430,7 +437,7 @@ class TestCheckInboxForNewEmail:
 
 class TestSubscribeEmail:
     def setup_method(self):
-        self.m = _import_main()
+        self.m = _fresh_import("browser")
 
     def _make_driver(self, find_ok=True):
         driver = MagicMock()
@@ -472,14 +479,12 @@ class TestSubscribeEmail:
     def test_clicks_checkbox_before_email(self):
         driver = self._make_driver()
         call_order = []
-        orig_find = driver.find_element.side_effect
 
         def track_find(by, selector):
             call_order.append(selector)
             return MagicMock()
 
         driver.find_element.side_effect = track_find
-
         input_fields = {
             "checkboxes": [{"css": "#agree"}],
             "email": [{"css": "input[type='email']"}],
@@ -497,18 +502,19 @@ class TestSubscribeEmail:
 
 class TestModifySubscriptionFile:
     def setup_method(self):
-        self.m = _import_main()
+        self.m = _fresh_import("modes")
 
     def _setup_json(self, tmp_path, data):
         p = tmp_path / "subs.json"
         p.write_text(json.dumps(data))
-        self.m.URL_JSON = str(p)
+        return str(p)
 
     def test_toggle_verified_status(self, tmp_path):
         data = [{"url": "https://a.com", "verified": False, "input_fields": {}}]
-        self._setup_json(tmp_path, data)
-        with patch("builtins.input", side_effect=["t", "1"]):
-            self.m.modify_subscription_file()
+        path = self._setup_json(tmp_path, data)
+        with patch("storage.URL_JSON", path):
+            with patch("builtins.input", side_effect=["t", "1"]):
+                self.m.modify_subscription_file()
         result = json.loads((tmp_path / "subs.json").read_text())
         assert result[0]["verified"] is True
 
@@ -517,26 +523,29 @@ class TestModifySubscriptionFile:
             {"url": "https://a.com", "verified": True,  "input_fields": {}},
             {"url": "https://b.com", "verified": False, "input_fields": {}},
         ]
-        self._setup_json(tmp_path, data)
-        with patch("builtins.input", side_effect=["d", "1"]):
-            self.m.modify_subscription_file()
+        path = self._setup_json(tmp_path, data)
+        with patch("storage.URL_JSON", path):
+            with patch("builtins.input", side_effect=["d", "1"]):
+                self.m.modify_subscription_file()
         result = json.loads((tmp_path / "subs.json").read_text())
         assert len(result) == 1
         assert result[0]["url"] == "https://b.com"
 
     def test_quit_action_does_nothing(self, tmp_path):
         data = [{"url": "https://a.com", "verified": False, "input_fields": {}}]
-        self._setup_json(tmp_path, data)
-        with patch("builtins.input", return_value="q"):
-            self.m.modify_subscription_file()
+        path = self._setup_json(tmp_path, data)
+        with patch("storage.URL_JSON", path):
+            with patch("builtins.input", return_value="q"):
+                self.m.modify_subscription_file()
         result = json.loads((tmp_path / "subs.json").read_text())
         assert result[0]["verified"] is False
 
     def test_invalid_index_does_not_crash(self, tmp_path):
         data = [{"url": "https://a.com", "verified": False, "input_fields": {}}]
-        self._setup_json(tmp_path, data)
-        with patch("builtins.input", side_effect=["t", "99"]):
-            self.m.modify_subscription_file()  # should not raise
+        path = self._setup_json(tmp_path, data)
+        with patch("storage.URL_JSON", path):
+            with patch("builtins.input", side_effect=["t", "99"]):
+                self.m.modify_subscription_file()  # should not raise
 
 
 # ===========================================================================
@@ -556,7 +565,7 @@ def _make_mock_element(tag, el_type="", el_id="", name="", cls="",
 
 class TestFetchFormElements:
     def setup_method(self):
-        self.m = _import_main()
+        self.m = _fresh_import("browser")
 
     def test_returns_empty_on_driver_get_failure(self):
         driver = MagicMock()
@@ -626,7 +635,7 @@ SAMPLE_ELEMENTS = [
 
 class TestPickSelectorsInteractively:
     def setup_method(self):
-        self.m = _import_main()
+        self.m = _fresh_import("browser")
 
     def test_blank_input_returns_default(self):
         with patch("builtins.input", return_value=""):
