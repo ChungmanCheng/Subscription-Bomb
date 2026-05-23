@@ -10,6 +10,7 @@ Responsibilities:
 """
 import time
 import random
+import os
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -24,10 +25,14 @@ from selector_utils import selector_from_config, parse_css_selector_list
 
 def create_driver(headless: bool = False) -> Firefox:
     options = Options()
+    accept_insecure = os.getenv("SUBSCRIPTION_BOMB_ACCEPT_INSECURE_ALERTS", "").lower() == "true"
     if headless:
         options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.set_capability("unhandledPromptBehavior", "accept" if accept_insecure else "dismiss")
+    if accept_insecure:
+        options.set_preference("security.warn_submit_secure_to_insecure", False)
     return Firefox(options=options)
 
 
@@ -41,6 +46,166 @@ def type_with_delay(element, text: str, delay: float = 0.05) -> None:
     for char in text:
         element.send_keys(char)
         time.sleep(delay)
+
+
+def fill_text_input(driver, element, text: str) -> None:
+    """
+    Fill a text input using normal keyboard interaction, with a JS fallback for
+    inputs Selenium can locate but cannot interact with directly.
+    """
+    try:
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        element.clear()
+        type_with_delay(element, text, delay=random.uniform(0.03, 0.05))
+    except Exception:
+        driver.execute_script(
+            """
+            const el = arguments[0];
+            const value = arguments[1];
+            el.focus();
+            el.value = value;
+            el.dispatchEvent(new Event('input', {bubbles: true}));
+            el.dispatchEvent(new Event('change', {bubbles: true}));
+            """,
+            element,
+            text,
+        )
+
+
+def click_element(driver, element) -> None:
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+    driver.execute_script("arguments[0].click();", element)
+
+
+def is_unstable_value_only_choice(field_config: dict) -> bool:
+    if not isinstance(field_config, dict):
+        return False
+    value = str(field_config.get("value") or "")
+    css = str(field_config.get("css") or "")
+    has_stable_hint = any(field_config.get(key) for key in ("id", "name", "class", "text"))
+    if has_stable_hint or not value:
+        return False
+    if len(value) > 8 or not value.isalnum():
+        return False
+    return "[value=" in css or not css
+
+
+def handle_unexpected_alert(driver) -> bool:
+    """
+    Handle browser confirmation dialogs. Insecure-form prompts are only accepted
+    when explicitly enabled via SUBSCRIPTION_BOMB_ACCEPT_INSECURE_ALERTS=true.
+    """
+    try:
+        alert = driver.switch_to.alert
+        text = alert.text or ""
+        accept_insecure = os.getenv("SUBSCRIPTION_BOMB_ACCEPT_INSECURE_ALERTS", "").lower() == "true"
+        if accept_insecure and "insecure connection" in text.lower():
+            alert.accept()
+            print("Accepted insecure form confirmation dialog.")
+            return True
+        alert.dismiss()
+        print(f"Dismissed browser confirmation dialog: {text}")
+    except Exception as ex:
+        print(f"Unable to handle browser confirmation dialog: {ex}")
+    return False
+
+
+def has_unexpected_alert(exc: Exception) -> bool:
+    name = type(exc).__name__
+    return name in {"UnexpectedAlertPresentException", "UnexpectedAlertOpenError"} or (
+        "Unexpected" in name and "Alert" in name
+    )
+
+
+def handle_open_alert_if_present(driver) -> bool | None:
+    try:
+        alert = driver.switch_to.alert
+        if not isinstance(alert.text, str):
+            return None
+    except Exception:
+        return None
+    return handle_unexpected_alert(driver)
+
+
+def wait_after_submit(driver, input_fields: dict) -> bool:
+    wait_time = input_fields.get("wait", 0)
+    if wait_time:
+        print(f"Waiting for {wait_time} seconds...")
+        time.sleep(wait_time)
+    alert_result = handle_open_alert_if_present(driver)
+    if alert_result is not None:
+        return alert_result
+    print("Page navigation complete!")
+    return True
+
+
+def submit_candidate_label(element) -> str:
+    parts = []
+    for attr in ("value", "aria-label", "title", "name", "id", "type"):
+        try:
+            parts.append(element.get_attribute(attr) or "")
+        except Exception:
+            continue
+    try:
+        parts.append(element.text or "")
+    except Exception:
+        pass
+    return " ".join(parts).lower()
+
+
+def looks_like_subscription_submit(element, allow_unlabeled_submit: bool = False) -> bool:
+    label = submit_candidate_label(element)
+    reject_words = ("search", "comment", "contact", "login", "log in", "sign in")
+    if any(word in label for word in reject_words):
+        return False
+
+    positive_words = ("subscribe", "sign up", "signup", "join", "newsletter")
+    if any(word in label for word in positive_words):
+        return True
+
+    try:
+        element_type = (element.get_attribute("type") or "").lower()
+    except Exception:
+        element_type = ""
+    return allow_unlabeled_submit and element_type == "submit"
+
+
+def fallback_submit_buttons(driver, email_elements: list) -> list:
+    selectors = "button[type='submit'], input[type='submit'], button, input[type='button'], [role='button']"
+    candidates = []
+    for email_element in email_elements:
+        try:
+            candidates.extend(driver.execute_script(
+                """
+                const input = arguments[0];
+                const selector = arguments[1];
+                const form = input.closest('form');
+                if (!form) return [];
+                return Array.from(form.querySelectorAll(selector));
+                """,
+                email_element,
+                selectors,
+            ) or [])
+        except Exception:
+            continue
+
+    form_matches = [
+        candidate
+        for candidate in candidates
+        if looks_like_subscription_submit(candidate, allow_unlabeled_submit=True)
+    ]
+    if form_matches:
+        return form_matches
+
+    try:
+        page_candidates = driver.find_elements(By.CSS_SELECTOR, selectors)
+    except Exception:
+        return []
+    return [
+        candidate
+        for candidate in page_candidates
+        if looks_like_subscription_submit(candidate, allow_unlabeled_submit=False)
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -59,35 +224,49 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
 
         # Checkboxes
         for checkbox in input_fields.get("checkboxes", []):
+            if is_unstable_value_only_choice(checkbox):
+                print(f"Checkbox skipped unstable value-only selector: {checkbox}")
+                continue
             css = selector_from_config(checkbox)
             if not css:
                 continue
             try:
                 el = driver.find_element(By.CSS_SELECTOR, css)
-                driver.execute_script("arguments[0].click();", el)
+                click_element(driver, el)
             except Exception as ex:
                 print(f"Checkbox not found/skipped ({css}): {ex}")
 
         # Email field(s)
+        email_filled = False
+        filled_email_elements = []
         for email_field in input_fields.get("email", []):
             css = selector_from_config(email_field)
             if not css:
                 continue
             try:
                 el = driver.find_element(By.CSS_SELECTOR, css)
-                type_with_delay(el, email, delay=random.uniform(0.03, 0.05))
+                fill_text_input(driver, el, email)
+                email_filled = True
+                filled_email_elements.append(el)
                 print(f"Filled email in field: {email_field}")
             except Exception as ex:
                 print(f"Email field not found/skipped ({css}): {ex}")
 
+        if not email_filled:
+            print(f"No email field could be filled for {url}; skipping submit.")
+            return False
+
         # Radio buttons
         for radio in input_fields.get("radios", []):
+            if is_unstable_value_only_choice(radio):
+                print(f"Radio skipped unstable value-only selector: {radio}")
+                continue
             css = selector_from_config(radio)
             if not css:
                 continue
             try:
                 el = driver.find_element(By.CSS_SELECTOR, css)
-                driver.execute_script("arguments[0].click();", el)
+                click_element(driver, el)
             except Exception as ex:
                 print(f"Radio not found/skipped ({css}): {ex}")
 
@@ -98,20 +277,29 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
                 continue
             try:
                 el = driver.find_element(By.CSS_SELECTOR, css)
-                driver.execute_script("arguments[0].click();", el)
+                click_element(driver, el)
                 print(f"Clicked submit button: {submit_field}")
-                wait_time = input_fields.get("wait", 0)
-                if wait_time:
-                    print(f"Waiting for {wait_time} seconds...")
-                    time.sleep(wait_time)
-                print("Page navigation complete!")
-                return True
+                return wait_after_submit(driver, input_fields)
             except Exception as ex:
+                if has_unexpected_alert(ex):
+                    return handle_unexpected_alert(driver)
                 print(f"Submit selector not found/skipped ({css}): {ex}")
+
+        for fallback in fallback_submit_buttons(driver, filled_email_elements):
+            try:
+                click_element(driver, fallback)
+                print("Clicked fallback submit button.")
+                return wait_after_submit(driver, input_fields)
+            except Exception as ex:
+                if has_unexpected_alert(ex):
+                    return handle_unexpected_alert(driver)
+                print(f"Fallback submit button skipped: {ex}")
 
         print(f"Submit button not found for {url}")
         return False
     except Exception as e:
+        if has_unexpected_alert(e):
+            return handle_unexpected_alert(driver)
         print(f"Failed to subscribe {email} to {url}: {e}")
         return False
 
