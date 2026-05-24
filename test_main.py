@@ -495,6 +495,63 @@ class TestSubscribeEmail:
         self.m.subscribe_email("a@b.com", "https://example.com", input_fields, driver)
         assert call_order.index("#agree") < call_order.index("input[type='email']")
 
+    def test_skips_unstable_value_only_checkbox_selectors(self):
+        driver = self._make_driver()
+        input_fields = {
+            "checkboxes": [
+                {"value": "7jv2", "css": "input[type='checkbox'][value='7jv2']"},
+                {"css": "#agree"},
+            ],
+            "email": [{"css": "input[type='email']"}],
+            "submit": [{"css": "button[type='submit']"}],
+            "radios": [],
+            "wait": 0,
+        }
+
+        self.m.subscribe_email("a@b.com", "https://example.com", input_fields, driver)
+
+        selectors = [call.args[1] for call in driver.find_element.call_args_list]
+        assert "input[type='checkbox'][value='7jv2']" not in selectors
+        assert "#agree" in selectors
+
+    def test_uses_same_form_fallback_when_submit_selector_is_stale(self):
+        driver = self._make_driver()
+        email_el = MagicMock()
+        submit_el = MagicMock()
+
+        def find_element(by, selector):
+            if selector == "input[type='email']":
+                return email_el
+            raise Exception("not found")
+
+        def execute_script(script, *args):
+            if "querySelectorAll" in script:
+                return [submit_el]
+            return None
+
+        def submit_attr(name):
+            values = {
+                "value": "Sign Up",
+                "type": "submit",
+            }
+            return values.get(name, "")
+
+        driver.find_element.side_effect = find_element
+        driver.execute_script.side_effect = execute_script
+        submit_el.get_attribute.side_effect = submit_attr
+        submit_el.text = ""
+        input_fields = {
+            "email": [{"css": "input[type='email']"}],
+            "submit": [{"css": "input[type='submit'][value='Missing']"}],
+            "checkboxes": [],
+            "radios": [],
+            "wait": 0,
+        }
+
+        result = self.m.subscribe_email("a@b.com", "https://example.com", input_fields, driver)
+
+        assert result is True
+
 
 # ===========================================================================
 # 10. modify_subscription_file – toggle and delete
