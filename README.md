@@ -75,7 +75,7 @@ python3 main.py
 Startup
   └── Show verified / unverified URL counts
   └── Main menu
-        ├── 1. Add Subscription URL
+        ├── 1. Add Subscription URL(s)
         ├── 2. Modify Email Subscription List
         ├── 3. Verify Mode
         ├── 4. Attack Mode
@@ -86,13 +86,15 @@ Startup
 
 ## 📖 Usage
 
-### 1 · Add Subscription URL
+### 1 · Add Subscription URL(s)
 
-Adds a new subscription form URL to `email_subscription.json`.
+Adds one or more subscription form URLs to `email_subscription.json`.
 
 1. Choose the URL source:
    - **[1] Manual** – paste the URL directly
-   - **[2] Search API** – enter a search query; pick from results
+   - **[2] Choose Search API result** – enter a query and pick one result
+   - **[3] Auto-add all Search API results** – inspect up to 20 unique results
+     and automatically save every page with a detected newsletter form
 2. Choose a form setup method:
    - **[1] Automatic (default)** – detects the email field, subscribe button,
      and required consent checkboxes, then saves the entry immediately
@@ -100,6 +102,12 @@ Adds a new subscription form URL to `email_subscription.json`.
 
 Automatic setup falls back to manual mapping when it cannot confidently find
 both an email field and a submit control.
+
+Bulk auto-add runs in a single headless browser, ignores malformed, duplicate,
+and already-stored URLs, and skips pages where a newsletter form cannot be
+identified confidently. It only inspects pages; it does not submit any forms.
+At the end it reports counts for added, existing, invalid, and unrecognized
+URLs. Every added entry remains unverified until Verify Mode tests it.
 
 In manual setup, configure these fields:
    | Prompt | Default |

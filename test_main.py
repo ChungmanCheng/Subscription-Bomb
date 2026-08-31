@@ -230,7 +230,7 @@ class TestSearchSubscriptionUrlsGet:
         payload = {"results": [{"url": "https://x.com"}, {"url": "https://y.com"}]}
         with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletter")
-        assert urls == ["https://x.com", "https://y.com"]
+        assert urls == ["https://x.com/", "https://y.com/"]
 
     def test_respects_limit(self):
         payload = {"results": [{"url": f"https://site{i}.com"} for i in range(10)]}
@@ -252,6 +252,16 @@ class TestSearchSubscriptionUrlsGet:
         with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletter")
         assert urls == []
+
+    def test_filters_invalid_and_duplicate_urls(self):
+        payload = {"results": [
+            {"url": "https://x.com/newsletter/"},
+            {"url": "https://X.com/newsletter#signup"},
+            {"url": "javascript:alert(1)"},
+        ]}
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
+            urls = self.m.search_subscription_urls("newsletter")
+        assert urls == ["https://x.com/newsletter"]
 
 
 # ===========================================================================
@@ -290,11 +300,54 @@ class TestSearchSubscriptionUrlsPost:
         payload = {"results": [{"url": "https://a.com"}, {"url": "https://b.com"}]}
         with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletters")
-        assert urls == ["https://a.com", "https://b.com"]
+        assert urls == ["https://a.com/", "https://b.com/"]
 
 
 # ===========================================================================
-# 7. get_inbox_uids
+# 7. normalize_subscription_url / choose_subscription_urls
+# ===========================================================================
+
+class TestSubscriptionUrlSelection:
+    def setup_method(self):
+        self.m = _fresh_import("search_api")
+
+    def test_normalizes_url_for_deduplication(self):
+        assert self.m.normalize_subscription_url(
+            " HTTPS://Example.COM:443/newsletter/#form "
+        ) == "https://example.com/newsletter"
+
+    def test_preserves_ipv6_host_brackets(self):
+        assert self.m.normalize_subscription_url(
+            "https://[2001:db8::1]:8443/newsletter"
+        ) == "https://[2001:db8::1]:8443/newsletter"
+
+    @pytest.mark.parametrize("url", [
+        "", "example.com", "ftp://example.com/list", "javascript:alert(1)",
+        "https://user:pass@example.com/list", "https://example.com:bad/list",
+    ])
+    def test_rejects_invalid_or_unsafe_urls(self, url):
+        assert self.m.normalize_subscription_url(url) is None
+
+    def test_auto_add_returns_every_search_result(self):
+        results = ["https://a.com/", "https://b.com/"]
+        with patch("builtins.input", side_effect=["3", "technology"]), \
+             patch.object(self.m, "search_subscription_urls", return_value=results) as search:
+            urls, auto_add = self.m.choose_subscription_urls()
+        assert urls == results
+        assert auto_add is True
+        search.assert_called_once_with("technology", limit=20)
+
+    def test_search_selection_still_returns_one_url(self):
+        results = ["https://a.com/", "https://b.com/"]
+        with patch("builtins.input", side_effect=["2", "technology", "2"]), \
+             patch.object(self.m, "search_subscription_urls", return_value=results):
+            urls, auto_add = self.m.choose_subscription_urls()
+        assert urls == ["https://b.com/"]
+        assert auto_add is False
+
+
+# ===========================================================================
+# 8. get_inbox_uids
 # ===========================================================================
 
 class TestGetInboxUids:
@@ -330,7 +383,7 @@ class TestGetInboxUids:
 
 
 # ===========================================================================
-# 8. check_inbox_for_new_email
+# 9. check_inbox_for_new_email
 # ===========================================================================
 
 def _make_raw_email(from_addr, subject):
@@ -664,7 +717,7 @@ class TestInferSubscriptionFields:
 
 
 # ===========================================================================
-# 13. add_subscription_url automatic setup
+# 14. add_subscription_url automatic setup
 # ===========================================================================
 
 class TestAddSubscriptionUrlAutomatic:
@@ -681,7 +734,7 @@ class TestAddSubscriptionUrlAutomatic:
         ]
 
         with patch("storage.URL_JSON", str(path)), \
-             patch("modes.choose_subscription_url", return_value="https://example.com/newsletter"), \
+             patch("modes.choose_subscription_urls", return_value=(["https://example.com/newsletter"], False)), \
              patch("modes.create_driver", return_value=driver), \
              patch("modes.fetch_form_elements", return_value=elements), \
              patch("builtins.input", return_value=""):
@@ -693,9 +746,73 @@ class TestAddSubscriptionUrlAutomatic:
         assert saved[0]["input_fields"]["submit"] == [{"css": "#subscribe"}]
         driver.quit.assert_called_once()
 
+    def test_dispatches_all_search_results_to_bulk_importer(self):
+        urls = ["https://a.com/", "https://b.com/"]
+        stats = {"added": 2, "existing": 0, "invalid": 0, "unrecognized": 0}
+        with patch("modes.choose_subscription_urls", return_value=(urls, True)), \
+             patch("modes.auto_add_subscription_urls", return_value=stats) as auto_add:
+            self.m.add_subscription_url()
+        auto_add.assert_called_once_with(urls)
+
+
+class TestAutoAddSubscriptionUrls:
+    def setup_method(self):
+        self.m = _fresh_import("modes")
+
+    def test_adds_all_detected_forms_and_skips_bad_results(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text(json.dumps([
+            {"url": "https://existing.com/", "verified": False, "input_fields": {}}
+        ]))
+        driver = MagicMock()
+        good_elements = [
+            {"tag": "input", "type": "email", "name": "email", "selector": "#email"},
+            {"tag": "button", "type": "submit", "text": "Subscribe", "selector": "#join"},
+        ]
+
+        def elements_for(url, _driver):
+            if "broken.com" in url:
+                raise RuntimeError("renderer crashed")
+            return good_elements if "new.com" in url else []
+
+        urls = [
+            "https://existing.com",
+            "https://new.com/newsletter/",
+            "https://NEW.com/newsletter#form",
+            "https://not-a-form.com/article",
+            "https://broken.com/newsletter",
+            "javascript:alert(1)",
+        ]
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver", return_value=driver) as create_driver, \
+             patch("modes.fetch_form_elements", side_effect=elements_for):
+            stats = self.m.auto_add_subscription_urls(urls)
+
+        assert stats == {
+            "added": 1, "existing": 2, "invalid": 1, "unrecognized": 2
+        }
+        saved = json.loads(path.read_text())
+        assert [entry["url"] for entry in saved] == [
+            "https://existing.com/", "https://new.com/newsletter"
+        ]
+        assert saved[1]["input_fields"]["email"] == [{"css": "#email"}]
+        assert saved[1]["verified"] is False
+        create_driver.assert_called_once_with(headless=True)
+        driver.quit.assert_called_once()
+
+    def test_does_not_open_browser_when_every_url_exists(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text(json.dumps([{"url": "https://existing.com/"}]))
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver") as create_driver:
+            stats = self.m.auto_add_subscription_urls(["https://existing.com"])
+        assert stats["added"] == 0
+        assert stats["existing"] == 1
+        create_driver.assert_not_called()
+
 
 # ===========================================================================
-# 14. pick_selectors_interactively
+# 15. pick_selectors_interactively
 # ===========================================================================
 
 SAMPLE_ELEMENTS = [

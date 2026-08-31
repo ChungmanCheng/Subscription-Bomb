@@ -15,7 +15,7 @@ from browser import (
     infer_subscription_fields,
     pick_selectors_interactively,
 )
-from search_api import choose_subscription_url
+from search_api import choose_subscription_urls, normalize_subscription_url
 from imap_utils import get_inbox_uids, check_inbox_for_new_email
 from selector_utils import parse_css_selector_list
 
@@ -24,22 +24,114 @@ from selector_utils import parse_css_selector_list
 # 1. Add URL
 # ---------------------------------------------------------------------------
 
+def _subscription_entry(url: str, input_fields: dict,
+                        sender_hint: str = "", subject_hint: str = "") -> dict:
+    """Build a new unverified subscription entry."""
+    return {
+        "url": url,
+        "verified": False,
+        "verification": {
+            "sender_hint": sender_hint,
+            "subject_hint": subject_hint,
+        },
+        "input_fields": input_fields,
+    }
+
+
+def auto_add_subscription_urls(urls: list[str]) -> dict[str, int]:
+    """Inspect and add every valid newsletter URL without further prompts.
+
+    Existing and duplicate URLs are skipped. A page is stored only when both
+    an email field and a submit control can be inferred. No form is submitted
+    by this discovery workflow.
+    """
+    data = load_subscription_urls()
+    existing = {
+        normalized
+        for entry in data
+        if (normalized := normalize_subscription_url(entry.get("url", "")))
+    }
+    candidates = []
+    seen = set()
+    stats = {"added": 0, "existing": 0, "invalid": 0, "unrecognized": 0}
+
+    for raw_url in urls:
+        url = normalize_subscription_url(raw_url)
+        if not url:
+            stats["invalid"] += 1
+        elif url in existing or url in seen:
+            stats["existing"] += 1
+        else:
+            candidates.append(url)
+            seen.add(url)
+
+    if not candidates:
+        return stats
+
+    print(f"\nAutomatically inspecting {len(candidates)} URL(s)…")
+    driver = create_driver(headless=True)
+    try:
+        for index, url in enumerate(candidates, start=1):
+            print(f"[{index}/{len(candidates)}] {url}")
+            try:
+                elements = fetch_form_elements(url, driver)
+                input_fields = infer_subscription_fields(elements)
+            except Exception as exc:
+                stats["unrecognized"] += 1
+                print(f"  Skipped: page inspection failed ({exc}).")
+                continue
+            if not input_fields["email"] or not input_fields["submit"]:
+                stats["unrecognized"] += 1
+                print("  Skipped: newsletter email and submit controls not found.")
+                continue
+
+            data.append(_subscription_entry(url, input_fields))
+            existing.add(url)
+            stats["added"] += 1
+            print(
+                f"  Added: {input_fields['email'][0]['css']} -> "
+                f"{input_fields['submit'][0]['css']}"
+            )
+    finally:
+        try:
+            driver.quit()
+        except Exception as exc:
+            print(f"Browser cleanup warning: {exc}")
+
+    if stats["added"]:
+        save_subscription_urls(data)
+    return stats
+
+
 def add_subscription_url() -> None:
     """
     Interactive wizard:
-      1. Choose URL (manual or Search API)
+      1. Choose one URL, or all results from the Search API
       2. Open browser → scrape all form elements
       3. Automatically infer form fields, with manual mapping as a fallback
       4. Optionally collect IMAP verification hints in manual setup
       5. Save as unverified entry in the JSON list
     """
-    url = choose_subscription_url()
-    if not url:
-        print("URL cannot be empty.")
+    urls, auto_add = choose_subscription_urls()
+    if not urls:
         return
 
+    if auto_add:
+        stats = auto_add_subscription_urls(urls)
+        print(
+            "\nAutomatic URL import complete. "
+            f"Added: {stats['added']}, Existing/duplicate: {stats['existing']}, "
+            f"Invalid: {stats['invalid']}, No form detected: {stats['unrecognized']}"
+        )
+        return
+
+    url = urls[0]
+
     data = load_subscription_urls()
-    if any(entry.get("url", "").strip() == url for entry in data):
+    if any(
+        normalize_subscription_url(entry.get("url", "")) == url
+        for entry in data
+    ):
         print("URL already exists in list.")
         return
 
@@ -109,15 +201,9 @@ def add_subscription_url() -> None:
         sender_hint  = input("Sender hint (e.g. noreply@example.com): ").strip()
         subject_hint = input("Subject hint (e.g. confirm, verify, welcome): ").strip()
 
-    data.append({
-        "url": url,
-        "verified": False,
-        "verification": {
-            "sender_hint":  sender_hint,
-            "subject_hint": subject_hint,
-        },
-        "input_fields": input_fields,
-    })
+    data.append(_subscription_entry(
+        url, input_fields, sender_hint=sender_hint, subject_hint=subject_hint
+    ))
     save_subscription_urls(data)
     print("URL added successfully as unverified!")
 

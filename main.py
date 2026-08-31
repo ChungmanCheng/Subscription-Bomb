@@ -29,7 +29,7 @@ def main() -> None:
 
     while True:
         print("\n=== Subscription Bot ===")
-        print("1. Add Subscription URL")
+        print("1. Add Subscription URL(s)")
         print("2. Modify Email Subscription List")
         print("3. Verify Mode (Test Unverified URLs)")
         print("4. Attack Mode (Use Verified URLs)")
