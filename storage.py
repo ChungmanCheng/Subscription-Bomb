@@ -7,6 +7,11 @@ import os
 from config import URL_JSON
 
 
+def subscription_storage_path() -> str:
+    """Return the absolute path used for subscription persistence."""
+    return os.path.abspath(URL_JSON)
+
+
 def load_subscription_urls(verified_only: bool = False,
                             unverified_only: bool = False) -> list[dict]:
     """
@@ -20,9 +25,10 @@ def load_subscription_urls(verified_only: bool = False,
 
     Returns an empty list if the file does not exist.
     """
-    if not os.path.exists(URL_JSON):
+    path = subscription_storage_path()
+    if not os.path.exists(path):
         return []
-    with open(URL_JSON, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if verified_only:
         return [e for e in data if e.get("verified")]
@@ -33,5 +39,8 @@ def load_subscription_urls(verified_only: bool = False,
 
 def save_subscription_urls(data: list[dict]) -> None:
     """Persist *data* to *URL_JSON* with 4-space indentation."""
-    with open(URL_JSON, "w") as f:
+    path = subscription_storage_path()
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
+        f.write("\n")
+    print(f"Saved {len(data)} subscription URL(s) to {path}")

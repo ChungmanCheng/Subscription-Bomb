@@ -1,6 +1,6 @@
 # Subscription Bomb 🚀
 
-This Python script automates email subscriptions to various newsletter services using **Selenium (undetected-geckodriver)**, allowing you to test email registration flows. It reads email addresses from a `.env` file and subscription URLs from a JSON file, then submits them to subscription forms automatically.
+This Python script uses **Selenium with standard Firefox WebDriver** to discover and test newsletter registration flows. It reads email addresses from a `.env` file and subscription URLs from a JSON file, then submits them only in the explicit verification or subscription modes.
 
 ## ⚠️ Disclaimer
 
@@ -27,7 +27,9 @@ Subscription-Bomb/
 ### 1. Install dependencies
 
 ```bash
-pip install selenium undetected-geckodriver python-dotenv
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ### 2. Configure `.env`
@@ -42,13 +44,34 @@ cp .env.sample .env
 # One or more target emails (comma-separated)
 EMAILS=you@example.com,another@example.com
 
-# --- Optional: Search API (for finding subscription URLs automatically) ---
-SEARCH_API_URL=https://api.example.com/search
+# Optional. Relative paths are resolved from this project directory.
+URL_JSON=email_subscription.json
+
+# --- Search API used by fully automatic Mode 1 (Tavily example) ---
+SEARCH_API_URL=https://api.tavily.com/search
 SEARCH_API_KEY=your-api-key
-SEARCH_API_KEY_HEADER=X-API-Key
-SEARCH_API_QUERY_PARAM=q
+SEARCH_API_METHOD=POST
+SEARCH_API_KEY_HEADER=Authorization
+SEARCH_API_KEY_PREFIX=Bearer
+SEARCH_API_QUERY_PARAM=query
+SEARCH_API_MAX_RESULTS_FIELD=max_results
 SEARCH_API_RESULTS_PATH=results
 SEARCH_API_URL_FIELD=url
+SEARCH_API_SCORE_FIELD=score
+
+# Topics searched automatically after choosing Mode 1
+AUTO_SEARCH_QUERIES=technology,finance,health,science
+AUTO_RESULTS_PER_QUERY=20
+AUTO_TARGET_ADDITIONS=50
+AUTO_MAX_CANDIDATES=500
+AUTO_EXPAND_SEARCH_QUERIES=true
+AUTO_MIN_SEARCH_SCORE=0.0
+AUTO_FOLLOW_LINKS=true
+AUTO_LINKS_PER_PAGE=3
+AUTO_RESPECT_ROBOTS=false
+AUTO_ROBOTS_USER_AGENT=SubscriptionBot
+AUTO_REQUEST_DELAY=1.0
+AUTO_PAGE_WAIT=5.0
 
 # --- Optional: IMAP inbox verification ---
 IMAP_HOST=imap.example.com
@@ -75,25 +98,61 @@ python3 main.py
 Startup
   └── Show verified / unverified URL counts
   └── Main menu
-        ├── 1. Add Subscription URL
-        ├── 2. Modify Email Subscription List
-        ├── 3. Verify Mode
-        ├── 4. Attack Mode
-        └── 5. Exit
+        ├── 1. Fully Automatic Newsletter Discovery
+        ├── 2. Add Subscription URL Manually
+        ├── 3. Modify Email Subscription List
+        ├── 4. Verify Mode
+        ├── 5. Attack Mode
+        └── 6. Exit
 ```
 
 ---
 
 ## 📖 Usage
 
-### 1 · Add Subscription URL
+### 1 · Fully Automatic Newsletter Discovery
 
-Adds a new subscription form URL to `email_subscription.json`.
+Mode 1 has no prompts after it starts. It reads every setting from `.env`:
 
-1. Choose the URL source:
-   - **[1] Manual** – paste the URL directly
-   - **[2] Search API** – enter a search query; pick from results
-2. Enter CSS selectors for the form fields:
+1. Expands each `AUTO_SEARCH_QUERIES` topic into a newsletter-focused query.
+2. Requests `AUTO_RESULTS_PER_QUERY` results from the Search API and filters
+   low relevance scores.
+3. Normalizes URLs, removes duplicates, rejects non-HTTP URLs, and expands
+   across focused categories/platforms when `AUTO_EXPAND_SEARCH_QUERIES=true`.
+4. Applies `AUTO_REQUEST_DELAY` and opens candidates in headless Firefox.
+   Set `AUTO_RESPECT_ROBOTS=true` if you want discovery to enforce `robots.txt`.
+5. Uses explicit page-readiness waits and inspects the top document plus
+   first-level iframes.
+6. Selects an email field and submit control from the same form and frame,
+   using labels and signup-form context when modern forms use a plain text input.
+7. When a newsletter hub hides its form, safely clicks a likely non-submit
+   newsletter-choice button, detects the revealed controls, and saves that
+   reveal action so later verification can replay it.
+8. If the result has no form, follows a limited number of promising same-site
+   newsletter/subscribe links and inspects those automatically.
+9. Reloads every inferred URL and replays its reveal/email/submit selectors;
+   mappings with generated IDs or selectors that do not survive are rejected.
+10. Detects common WAF/browser challenges separately from unsupported forms,
+    checkpoints every replay-validated form as unverified, and continues
+    backfilling until `AUTO_TARGET_ADDITIONS` succeeds or
+    `AUTO_MAX_CANDIDATES` is reached.
+
+Discovery never fills or submits a form. Verification and actual subscriptions
+remain separate modes.
+
+Implementation choices follow the official documentation for
+[Tavily Search parameters](https://docs.tavily.com/documentation/api-reference/endpoint/search),
+[Selenium waiting strategies](https://www.selenium.dev/documentation/webdriver/waits/),
+[Selenium iframe handling](https://www.selenium.dev/documentation/webdriver/interactions/frames/),
+and the [Robots Exclusion Protocol](https://www.rfc-editor.org/rfc/rfc9309.html).
+
+### 2 · Add Subscription URL Manually
+
+Use this mode for a specific URL or a one-off Search API query. Automatic form
+mapping remains the default, with interactive CSS selection as its fallback.
+
+In manual setup, configure these fields:
+
    | Prompt | Default |
    |---|---|
    | Email field | `input[type='email']` |
@@ -101,7 +160,9 @@ Adds a new subscription form URL to `email_subscription.json`.
    | Checkboxes | *(optional)* |
    | Radio buttons | *(optional)* |
    | Wait after submit (s) | `0` |
-3. Enter optional **IMAP hints** to help identify the confirmation email:
+
+Enter optional **IMAP hints** to help identify the confirmation email:
+
    - **Sender hint** – substring of the sender address (e.g. `noreply@example.com`)
    - **Subject hint** – substring of the subject line (e.g. `confirm`, `welcome`)
 
@@ -109,7 +170,7 @@ The entry is saved as `"verified": false` until Verify Mode confirms it.
 
 ---
 
-### 2 · Modify Email Subscription List
+### 3 · Modify Email Subscription List
 
 Lists all entries with their verification status (✔ / ❌).
 
@@ -121,7 +182,7 @@ Lists all entries with their verification status (✔ / ❌).
 
 ---
 
-### 3 · Verify Mode
+### 4 · Verify Mode
 
 Tests every **unverified** URL and marks it verified if the confirmation flow succeeds.
 
@@ -148,7 +209,7 @@ Results are saved back to `email_subscription.json`.
 
 ---
 
-### 4 · Attack Mode
+### 5 · Attack Mode
 
 Runs subscriptions against all **verified** URLs in headless mode.
 
@@ -177,6 +238,7 @@ Runs subscriptions against all **verified** URLs in headless mode.
       "radios":      [],
       "checkboxes":  [],
       "selections":  [],
+      "pre_clicks":  [{"css": "button[data-newsletter='daily']"}],
       "wait":        3
     }
   }

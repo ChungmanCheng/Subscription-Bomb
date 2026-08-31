@@ -1118,5 +1118,2701 @@
             "selections": [],
             "wait": 5
         }
+    },
+    {
+        "url": "https://www.cnn.com/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#newsletter-subscribe-email-input"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#newsletter-subscribe-button"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [
+                {
+                    "css": "button[data-zjs-newsletter=\"breaking_news\"]"
+                }
+            ],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.buzzfeed.com/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input.newsletter-form_input__YBirI"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [
+                {
+                    "css": "button",
+                    "index": 6
+                }
+            ],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://dailyyonder.com/contact-us/subscribe-daily-yonder",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#newspack-subscribe-1 input[name=\"npe\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#newspack-subscribe-1 button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.merriam-webster.com/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]",
+                    "visible": true
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input[name=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://blog.google/newsletter-subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#uni_subscribe_email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[aria-label=\"Subscribe\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://signup.which.co.uk/wlp-technewsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#form__submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://clickup.com/blog/tech-newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#bottom-newsletter-signup-email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#bottom-newsletter-signup button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.neil.blog/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email_address\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.formkit-submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://softwaremill.com/blog?tag=newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.button"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.ibm.com/us-en/forms/news-mkt-52954",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#Email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.mktoButton"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://tldr.tech/",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.rounded"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.mit.edu/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#mce-EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mc-embedded-subscribe"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.bizcommunity.com/Signup.aspx",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#xEmailAddress"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#xSubmit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://thefinancialbrand.com/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#input_189_3"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#gform_submit_button_189"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://finance.yahoo.com/news/sign-up-for-yahoo-finances-newsletters-174158495.html",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#morningBrief-input"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.primary-btn"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://gfmag.com/subscribe-to-our-weekly-newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#input_59_1"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#gform_submit_button_59"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.ibm.com/us-en/forms/news-mkt-52197",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#Email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.mktoButton"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://signup.triblive.com/",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#field_p2mjd"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#form_rklaes-test button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://mailchimp.com/resources/how-to-start-a-newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#form44 input[name=\"businessEmail\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#form44 input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.globalethicalfinance.org/contact/subscribe-to-the-inner-circle",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#mce-EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mc-embedded-subscribe"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.bloomberg.com/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-form-input"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[name=\"outlined-button\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [
+                {
+                    "css": "button[name=\"button\"]",
+                    "index": 2
+                }
+            ],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.scirp.org/journal/newslettersubscription?journalid=69",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#UserControl_footer_UserControl_NewsletterSubscription_TextBox_nls_email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#UserControl_footer_UserControl_NewsletterSubscription_btnSubscribe"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://sciencex.com/help/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#nwsub button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://carnegiescience.edu/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#tfa_1"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#submit_button"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.popsci.com/email-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.newsletter-direct-link"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.nationalacademies.org/subscribe-to-email",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "form[aria-label=\"HubSpot Form\"] input[name=\"0-1/email\"]",
+                    "frame_index": 0
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "form[aria-label=\"HubSpot Form\"] button[type=\"submit\"]",
+                    "frame_index": 0
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://coursesandconferences.wellcomeconnectingscience.org/contact-us/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#textbox-11",
+                    "frame_index": 0
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#consent-12",
+                    "frame_index": 0
+                }
+            ],
+            "radios": [],
+            "checkboxes": [
+                {
+                    "css": "#consent-12",
+                    "frame_index": 0
+                }
+            ],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://ufhealth.org/making-the-rounds-uf-health-newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#fui-storiesNewsletter-ttudcp-fields-newsletterEmail"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#fui-storiesNewsletter-ttudcp button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.zesthealth.com/newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "form[name=\"iterable_optin\"] input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.animate.shop/pages/newsletter-signup-campaign",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"contact[email]\"]",
+                    "visible": true
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.form__submit",
+                    "visible": true
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.patreasury.gov/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#mce-EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mc-embedded-subscribe"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.ecomengine.com/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-f6e39f88-22b2-4808-9a49-7d3a41e2ad4e_5481"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#hsForm_f6e39f88-22b2-4808-9a49-7d3a41e2ad4e_5481 input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://theweek.com/food-drink-newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"MAIL\"]",
+                    "visible": true
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input.form__submit-input"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://inboxcollective.com/what-you-can-learn-from-some-of-the-most-successful-food-newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#_r_1_-email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[aria-label=\"Subscribe\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.delish.com/email/delish-newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#Email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.hds-do-not-use"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://smittenkitchen.com/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://link.thetimes.com/join/74t/signup-travel",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#signup-form input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.travelcaffeine.com/free-travel-newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input[name=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.friendlyplanet.com/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input.w-full"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.cursor-pointer"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.intrepidtravel.com/us/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#field161107816"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#fsSubmitButton5667295"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [
+                {
+                    "css": "#field161107828_1"
+                }
+            ],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.travelingwithkristin.com/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#_form_3_submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://indianasportscorp.org/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#field180616092"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#fsSubmitButton6108376"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [
+                {
+                    "css": "#field180616249_1"
+                },
+                {
+                    "css": "#field180616249_2"
+                },
+                {
+                    "css": "#field180616249_3"
+                },
+                {
+                    "css": "#field180616249_4"
+                },
+                {
+                    "css": "#field180616249_5"
+                },
+                {
+                    "css": "#field180616249_6"
+                },
+                {
+                    "css": "#field180616249-all"
+                }
+            ],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.ncaa.com/newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#bz_emailAddress"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#imv6gi"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://moveunitedsport.org/newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#gform_316 input[name=\"input_3\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#gform_submit_button_316"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://link.nbcnews.com/join/5cj/the-sports-desk-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input.st-recaptcha"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://cloud.email.sportico.com/signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#EmailAddress"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#btn-save"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://app.hokiesports.com/SignUp_HSCOM",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#fe211"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#fe230"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://frontofficesports.com/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#input_128_1"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#gform_submit_button_128"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://uclabruins.com/sign-up-for-bruin-e-mails",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#fe214",
+                    "frame_index": 0
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#fe241",
+                    "frame_index": 0
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://app.fightingillini.com/signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#fe187"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#fe197"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://mailbrew.com/public-subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [
+                {
+                    "css": "button"
+                }
+            ],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.baldwinhealth.com/enewsletter-sign-up",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#Email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mktoForm_1418 button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.osfhealthcare.org/patients-visitors/sharing-health",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#mce-EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mc-embedded-subscribe"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.health.harvard.edu/healthbeat",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[name=\"subscribe\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.everydayhealth.com/newsletter-subscriptions/signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email-32\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.newsletter-sign-up__form-button"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.optum.com/en/care/newsletter-signup.html",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#textinput-0187bfeaa7-widget"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#submit-fdd83cb0b5-widget"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://links.e.response.mayoclinic.org/Newsletter-SignUp",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#fe2724"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#fe2729"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.healthline.com/newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]",
+                    "visible": true
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[aria-label=\"SIGN UP\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.cdc.gov/other/emailupdates/index.html",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#userID"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#govd-subscribe button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.foodbusinessnews.net/newsletter_subscriptions",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"answer_1161528\"]",
+                    "frame_index": 4
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#quiz-form button[type=\"submit\"]",
+                    "frame_index": 4
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://sports.yahoo.com/newsletters/yahoo-sports-am",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#newsletter-email-input-field"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#newsletter-subscribe-btn"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.theculturefactor.com/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-d86e75f3-4440-44db-be19-df33f6fb670f_7058"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#hsForm_d86e75f3-4440-44db-be19-df33f6fb670f_7058 input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.opportunityculture.org/mailing-list",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#_form_4_submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://philaculture.org/newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#mce-EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mc-embedded-subscribe"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://slate.com/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#newsletter-email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#author-alerts-save"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://cloud.email.variety.com/signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#EmailAddress"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#btn-save"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://theempoweredauthor.com/free-newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email_address\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.formkit-submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.hachettebookgroup.com/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email_01KM0X9F7F2DWDXA0P8XEVCMPK"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.needsclick"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://randomhousebooks.com/email",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.signup-button"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.okpsaedu.org/en/sign-up",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-386cdb70-5440-4c9a-a326-c19f0e556751_4464"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#hsForm_386cdb70-5440-4c9a-a326-c19f0e556751_4464 input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.virtualeduc.com/newsletter.php",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input[name=\"Submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.future-ed.org/newsletter-sign-up",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#input_1_1"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#gform_submit_button_1"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://edu.google.com/intl/ALL_us/communications",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[name=\"Btn_submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://teachforall.org/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#tfa_3",
+                    "frame_index": 0
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#submit_button",
+                    "frame_index": 0
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.innovativeeducators.org/pages/newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-input",
+                    "frame_index": 3
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[name=\"SUBSCRIBE\"]",
+                    "frame_index": 3
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://public.govdelivery.com/accounts/USDE/signup/49108",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#signup-email-address",
+                    "frame_index": 0
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[type=\"submit\"]",
+                    "frame_index": 0
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://onebillionresilient.org/email-subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-597af23b-1ef5-4a55-84ed-770dfc0ff796"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#hsForm_597af23b-1ef5-4a55-84ed-770dfc0ff796 input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.climatecentral.org/list-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input.styles_input__RWJid",
+                    "visible": true
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.styles_button__SClj0"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://yaleclimateconnections.org/newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#newspack-subscribe-1 input[name=\"npe\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#newspack-subscribe-1 button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://mitsloan.mit.edu/centers-initiatives/climate-policy-center/subscribe-to-our-newsletters",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#edit-email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#edit-actions-submit"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [
+                {
+                    "css": "#edit-interests-70080903"
+                }
+            ],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.climatebonds.net/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#form-input-emailAddress"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button[name=\"form_page_submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://castor.house.gov/climatecrisis/sign-our-newsletter.html",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#mce-EMAIL"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mc-embedded-subscribe"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.utahnonprofits.org/sign-up-for-our-newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"Email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input.mn-subscribe-button"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.councilofnonprofits.org/connect",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-Primary"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#_qf_Edit_next"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://pixellighthouse.com/nonprofit-newsletter-welcome-email",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#input_4_1"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#gform_submit_button_4"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://pages.charityengine.net/newsletter-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-800979ec-49a3-44eb-b948-4e43d12ddd3f_3830"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#hsForm_800979ec-49a3-44eb-b948-4e43d12ddd3f_3830 input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://reallygoodemails.com/subscribe",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#wf-form-rge-subscribe-lp-hero-form input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://gmail.us20.list-manage.com/subscribe?u=f6caa7772b0d4405ef45753fe&id=e82c9b3d81",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#MERGE0"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input[name=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.constantcontact.com/blog/nonprofit-email-list-for-donations",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#subbutton-footer"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.inboxarmy.com/blog/newsletter-signup-form",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#sub_email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "form[aria-label=\"Contact form\"] input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://sendpulse.com/blog/subscription-forms",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#csf_email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#csf_subscription_form button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://techcrunch.com/newsletters/techcrunch-daily-news",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.btn__link"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.developerdotstar.com/mag/subscribe.html",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "input[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.guidewire.com/developers/developer-resources/developer-newsletter",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#Email"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#mktoForm_5380 button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.kitetechgroup.com/landing/email-signup",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#email-e61b823c-0203-42ab-ac5c-0ab0b11a0464",
+                    "frame_index": 0
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#hsForm_e61b823c-0203-42ab-ac5c-0ab0b11a0464 input[type=\"submit\"]",
+                    "frame_index": 0
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://www.helpdesk.com/blog/how-to-create-newsletter-signup-form",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "input[name=\"email\"]",
+                    "visible": true
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "button.c-btn",
+                    "visible": true
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
+    },
+    {
+        "url": "https://profile.usatoday.com/newsletters/manage",
+        "verified": false,
+        "verification": {
+            "sender_hint": "",
+            "subject_hint": ""
+        },
+        "input_fields": {
+            "email": [
+                {
+                    "css": "#manage-form input[name=\"email\"]"
+                }
+            ],
+            "username": [],
+            "phone": [],
+            "submit": [
+                {
+                    "css": "#manage-form button[type=\"submit\"]"
+                }
+            ],
+            "radios": [],
+            "checkboxes": [],
+            "selections": [],
+            "pre_clicks": [],
+            "wait": 0
+        }
     }
 ]

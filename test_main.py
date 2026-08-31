@@ -9,7 +9,7 @@ import sys
 import time
 import email as email_module
 from email.mime.text import MIMEText
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
 
@@ -27,7 +27,8 @@ _PROJECT_MODULES = (
 def _stub_heavy_deps():
     for mod in ("selenium", "selenium.webdriver", "selenium.webdriver.common",
                 "selenium.webdriver.common.by", "selenium.webdriver.firefox",
-                "selenium.webdriver.firefox.options", "undetected_geckodriver",
+                "selenium.webdriver.firefox.options", "selenium.webdriver.support",
+                "selenium.webdriver.support.ui", "undetected_geckodriver",
                 "dotenv"):
         if mod not in sys.modules:
             sys.modules[mod] = MagicMock()
@@ -45,10 +46,22 @@ def _fresh_import(module_name: str, env_overrides: dict | None = None):
         "SEARCH_API_KEY": "",
         "SEARCH_API_METHOD": "GET",
         "SEARCH_API_KEY_HEADER": "X-API-Key",
+        "SEARCH_API_KEY_PREFIX": "",
         "SEARCH_API_KEY_BODY_FIELD": "",
         "SEARCH_API_QUERY_PARAM": "q",
         "SEARCH_API_RESULTS_PATH": "results",
         "SEARCH_API_URL_FIELD": "url",
+        "SEARCH_API_SCORE_FIELD": "score",
+        "SEARCH_API_MAX_RESULTS_FIELD": "",
+        "AUTO_SEARCH_QUERIES": "newsletter subscribe",
+        "AUTO_RESULTS_PER_QUERY": "10",
+        "AUTO_MAX_URLS": "50",
+        "AUTO_MIN_SEARCH_SCORE": "0.5",
+        "AUTO_FOLLOW_LINKS": "true",
+        "AUTO_LINKS_PER_PAGE": "3",
+        "AUTO_RESPECT_ROBOTS": "false",
+        "AUTO_REQUEST_DELAY": "0",
+        "AUTO_PAGE_WAIT": "5",
         "IMAP_HOST": "",
         "IMAP_PORT": "993",
         "IMAP_USER": "",
@@ -203,6 +216,29 @@ class TestLoadSaveSubscriptionUrls:
         loaded = json.loads(path.read_text())
         assert loaded == SAMPLE_DATA
 
+    def test_save_reports_absolute_destination_and_count(self, tmp_path, capsys):
+        path = tmp_path / "subs.json"
+        self.m.URL_JSON = str(path)
+        self.m.save_subscription_urls(SAMPLE_DATA)
+        output = capsys.readouterr().out
+        assert f"Saved 3 subscription URL(s) to {path}" in output
+        assert path.read_text().endswith("\n")
+
+
+class TestStorageConfiguration:
+    def test_default_path_is_anchored_to_project_directory(self):
+        config = _fresh_import("config")
+        assert os.path.isabs(config.URL_JSON)
+        assert config.URL_JSON == os.path.join(
+            config.PROJECT_DIR, "email_subscription.json"
+        )
+
+    def test_relative_override_is_anchored_to_project_directory(self):
+        config = _fresh_import("config", {"URL_JSON": "data/subscriptions.json"})
+        assert config.URL_JSON == os.path.join(
+            config.PROJECT_DIR, "data/subscriptions.json"
+        )
+
 
 # ===========================================================================
 # 5. search_subscription_urls – GET mode
@@ -230,7 +266,7 @@ class TestSearchSubscriptionUrlsGet:
         payload = {"results": [{"url": "https://x.com"}, {"url": "https://y.com"}]}
         with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletter")
-        assert urls == ["https://x.com", "https://y.com"]
+        assert urls == ["https://x.com/", "https://y.com/"]
 
     def test_respects_limit(self):
         payload = {"results": [{"url": f"https://site{i}.com"} for i in range(10)]}
@@ -253,6 +289,25 @@ class TestSearchSubscriptionUrlsGet:
             urls = self.m.search_subscription_urls("newsletter")
         assert urls == []
 
+    def test_filters_invalid_and_duplicate_urls(self):
+        payload = {"results": [
+            {"url": "https://x.com/newsletter/"},
+            {"url": "https://X.com/newsletter#signup"},
+            {"url": "javascript:alert(1)"},
+        ]}
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
+            urls = self.m.search_subscription_urls("newsletter")
+        assert urls == ["https://x.com/newsletter"]
+
+    def test_supports_bearer_authentication_prefix(self):
+        payload = {"results": []}
+        self.m.SEARCH_API_KEY_HEADER = "Authorization"
+        self.m.SEARCH_API_KEY_PREFIX = "Bearer"
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)) as opened:
+            self.m.search_subscription_urls("newsletter")
+        request = opened.call_args[0][0]
+        assert request.headers["Authorization"] == "Bearer key123"
+
 
 # ===========================================================================
 # 6. search_subscription_urls – POST mode (Tavily)
@@ -268,6 +323,7 @@ class TestSearchSubscriptionUrlsPost:
             "SEARCH_API_KEY_BODY_FIELD": "api_key",
             "SEARCH_API_RESULTS_PATH": "results",
             "SEARCH_API_URL_FIELD": "url",
+            "SEARCH_API_MAX_RESULTS_FIELD": "max_results",
         })
 
     def _mock_response(self, payload):
@@ -285,16 +341,72 @@ class TestSearchSubscriptionUrlsPost:
             body = json.loads(req.data.decode())
             assert body["query"] == "test query"
             assert body["api_key"] == "tvly-key"
+            assert body["max_results"] == 5
 
     def test_returns_urls_from_post_response(self):
         payload = {"results": [{"url": "https://a.com"}, {"url": "https://b.com"}]}
         with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletters")
-        assert urls == ["https://a.com", "https://b.com"]
+        assert urls == ["https://a.com/", "https://b.com/"]
+
+    def test_filters_numeric_scores_below_threshold(self):
+        payload = {"results": [
+            {"url": "https://low.com", "score": 0.2},
+            {"url": "https://high.com", "score": 0.8},
+            {"url": "https://missing-score.com"},
+        ]}
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
+            urls = self.m.search_subscription_urls(
+                "newsletters", min_score=0.5
+            )
+        assert urls == ["https://high.com/", "https://missing-score.com/"]
 
 
 # ===========================================================================
-# 7. get_inbox_uids
+# 7. normalize_subscription_url / choose_subscription_urls
+# ===========================================================================
+
+class TestSubscriptionUrlSelection:
+    def setup_method(self):
+        self.m = _fresh_import("search_api")
+
+    def test_normalizes_url_for_deduplication(self):
+        assert self.m.normalize_subscription_url(
+            " HTTPS://Example.COM:443/newsletter/#form "
+        ) == "https://example.com/newsletter"
+
+    def test_preserves_ipv6_host_brackets(self):
+        assert self.m.normalize_subscription_url(
+            "https://[2001:db8::1]:8443/newsletter"
+        ) == "https://[2001:db8::1]:8443/newsletter"
+
+    @pytest.mark.parametrize("url", [
+        "", "example.com", "ftp://example.com/list", "javascript:alert(1)",
+        "https://user:pass@example.com/list", "https://example.com:bad/list",
+    ])
+    def test_rejects_invalid_or_unsafe_urls(self, url):
+        assert self.m.normalize_subscription_url(url) is None
+
+    def test_auto_add_returns_every_search_result(self):
+        results = ["https://a.com/", "https://b.com/"]
+        with patch("builtins.input", side_effect=["3", "technology"]), \
+             patch.object(self.m, "search_subscription_urls", return_value=results) as search:
+            urls, auto_add = self.m.choose_subscription_urls()
+        assert urls == results
+        assert auto_add is True
+        search.assert_called_once_with("technology", limit=20)
+
+    def test_search_selection_still_returns_one_url(self):
+        results = ["https://a.com/", "https://b.com/"]
+        with patch("builtins.input", side_effect=["2", "technology", "2"]), \
+             patch.object(self.m, "search_subscription_urls", return_value=results):
+            urls, auto_add = self.m.choose_subscription_urls()
+        assert urls == ["https://b.com/"]
+        assert auto_add is False
+
+
+# ===========================================================================
+# 8. get_inbox_uids
 # ===========================================================================
 
 class TestGetInboxUids:
@@ -330,7 +442,7 @@ class TestGetInboxUids:
 
 
 # ===========================================================================
-# 8. check_inbox_for_new_email
+# 9. check_inbox_for_new_email
 # ===========================================================================
 
 def _make_raw_email(from_addr, subject):
@@ -467,7 +579,10 @@ class TestSubscribeEmail:
             "radios": [],
             "wait": 0,
         }
-        result = self.m.subscribe_email("a@b.com", "https://example.com", input_fields, driver)
+        with patch.object(self.m, "AUTO_PAGE_WAIT", 0):
+            result = self.m.subscribe_email(
+                "a@b.com", "https://example.com", input_fields, driver
+            )
         assert result is False
 
     def test_returns_false_on_driver_get_exception(self):
@@ -494,6 +609,104 @@ class TestSubscribeEmail:
         }
         self.m.subscribe_email("a@b.com", "https://example.com", input_fields, driver)
         assert call_order.index("#agree") < call_order.index("input[type='email']")
+
+    def test_replays_signup_reveal_before_filling_email(self):
+        driver = self._make_driver()
+        call_order = []
+
+        def track_find(by, selector):
+            call_order.append(selector)
+            return MagicMock()
+
+        driver.find_element.side_effect = track_find
+        input_fields = {
+            "pre_clicks": [{"css": "button[data-newsletter='daily']"}],
+            "email": [{"css": "#email"}],
+            "submit": [{"css": "#submit"}],
+        }
+        assert self.m.subscribe_email(
+            "a@b.com", "https://example.com", input_fields, driver
+        ) is True
+        assert call_order.index("button[data-newsletter='daily']") < call_order.index("#email")
+
+    def test_switches_into_configured_iframe(self):
+        driver = self._make_driver()
+        frame = MagicMock()
+        driver.find_elements.return_value = [frame]
+        input_fields = {
+            "email": [{"css": "#email", "frame_index": 0}],
+            "submit": [{"css": "#submit", "frame_index": 0}],
+        }
+        assert self.m.subscribe_email(
+            "a@b.com", "https://x.com", input_fields, driver
+        ) is True
+        assert driver.switch_to.frame.call_count == 2
+        driver.switch_to.frame.assert_any_call(frame)
+
+    def test_fresh_load_validation_replays_action_without_submitting(self):
+        driver = self._make_driver()
+        reveal = MagicMock()
+        email = MagicMock()
+        email.is_displayed.return_value = True
+        submit = MagicMock()
+        elements = {
+            "#reveal": reveal,
+            "#email": email,
+            "#submit": submit,
+        }
+        driver.find_element.side_effect = lambda _by, css: elements[css]
+        fields = {
+            "pre_clicks": [{"css": "#reveal"}],
+            "email": [{"css": "#email"}],
+            "submit": [{"css": "#submit"}],
+        }
+
+        assert self.m.validate_subscription_mapping(
+            "https://example.com/newsletter", fields, driver
+        ) is True
+        driver.get.assert_called_once_with("https://example.com/newsletter")
+        email.send_keys.assert_not_called()
+        submit.click.assert_not_called()
+        driver.execute_script.assert_any_call("arguments[0].click();", reveal)
+
+    def test_fresh_load_validation_rejects_missing_selector(self):
+        driver = self._make_driver(find_ok=False)
+        fields = {
+            "email": [{"css": "#unstable-email"}],
+            "submit": [{"css": "#submit"}],
+        }
+        with patch.object(self.m, "AUTO_PAGE_WAIT", 0):
+            assert self.m.validate_subscription_mapping(
+                "https://example.com/newsletter", fields, driver
+            ) is False
+
+    def test_visible_selector_skips_hidden_duplicate(self):
+        driver = MagicMock()
+        hidden = MagicMock()
+        hidden.is_displayed.return_value = False
+        visible = MagicMock()
+        visible.is_displayed.return_value = True
+        driver.find_elements.return_value = [hidden, visible]
+        assert self.m._find_configured_element(
+            driver, {"css": 'input[name="email"]', "visible": True}
+        ) is visible
+
+
+class TestCreateDriver:
+    def setup_method(self):
+        self.m = _fresh_import("browser")
+
+    def test_discovery_driver_uses_identifiable_user_agent(self):
+        options = MagicMock()
+        with patch.object(self.m, "Options", return_value=options), \
+             patch.object(self.m, "Firefox") as firefox:
+            self.m.create_driver(headless=True, discovery=True)
+        options.add_argument.assert_any_call("--headless")
+        options.set_preference.assert_called_once_with(
+            "general.useragent.override",
+            "Mozilla/5.0 (compatible; SubscriptionBot/1.0)",
+        )
+        firefox.assert_called_once_with(options=options)
 
 
 # ===========================================================================
@@ -606,6 +819,15 @@ class TestFetchFormElements:
             result = self.m.fetch_form_elements("https://x.com", driver)
         assert result[0]["selector"] == "button.btn"
 
+    def test_dynamic_numeric_id_prefers_stable_name(self):
+        el = _make_mock_element(
+            "input", el_type="email", el_id="field-1862534092", name="email"
+        )
+        driver = MagicMock()
+        driver.find_elements.side_effect = lambda by, tag: [el] if tag == "input" else []
+        result = self.m.fetch_form_elements("https://x.com", driver)
+        assert result[0]["selector"] == 'input[name="email"]'
+
     def test_collects_multiple_tags(self):
         inp = _make_mock_element("input", el_type="text", el_id="q")
         btn = _make_mock_element("button", el_type="submit", el_id="go")
@@ -618,9 +840,557 @@ class TestFetchFormElements:
         tags = [r["tag"] for r in result]
         assert "input" in tags and "button" in tags
 
+    def test_collects_controls_inside_iframe(self):
+        email = _make_mock_element("input", el_type="email", el_id="email")
+        frame = MagicMock()
+        in_frame = False
+        driver = MagicMock()
+
+        def enter_frame(_):
+            nonlocal in_frame
+            in_frame = True
+
+        def leave_frame():
+            nonlocal in_frame
+            in_frame = False
+
+        def find_elements(_by, selector):
+            if selector == "iframe, frame":
+                return [frame]
+            if selector == "input" and in_frame:
+                return [email]
+            return []
+
+        def execute_script(script, *_args):
+            return "complete" if "readyState" in script else 0
+
+        driver.find_elements.side_effect = find_elements
+        driver.switch_to.frame.side_effect = enter_frame
+        driver.switch_to.default_content.side_effect = leave_frame
+        driver.execute_script.side_effect = execute_script
+
+        result = self.m.fetch_form_elements("https://x.com", driver)
+        assert result[0]["selector"] == "#email"
+        assert result[0]["frame_index"] == 0
+
+
+class TestFindSubscriptionLinks:
+    def setup_method(self):
+        self.m = _fresh_import("browser")
+
+    @staticmethod
+    def _anchor(href, text=""):
+        anchor = MagicMock()
+        anchor.text = text
+        anchor.get_attribute.side_effect = lambda name: {
+            "href": href, "title": "", "aria-label": "",
+        }.get(name, "")
+        return anchor
+
+    def test_ranks_same_site_newsletter_links(self):
+        driver = MagicMock()
+        driver.find_elements.return_value = [
+            self._anchor("https://example.com/about", "About"),
+            self._anchor("/newsletter", "Subscribe to our newsletter"),
+            self._anchor("/unsubscribe", "Unsubscribe"),
+            self._anchor("https://other.com/newsletter", "Newsletter"),
+        ]
+        assert self.m.find_subscription_links(
+            "https://example.com/article", driver
+        ) == ["https://example.com/newsletter"]
+
+    def test_excludes_newsletter_links_that_lead_to_login(self):
+        driver = MagicMock()
+        driver.find_elements.return_value = [
+            self._anchor("/login?redirectTo=/newsletter", "Newsletter preferences"),
+            self._anchor("/newsletter", "Subscribe to newsletter"),
+        ]
+        assert self.m.find_subscription_links(
+            "https://example.com/article", driver
+        ) == ["https://example.com/newsletter"]
+
 
 # ===========================================================================
-# 12. pick_selectors_interactively
+# 12. infer_subscription_fields
+# ===========================================================================
+
+class TestInferSubscriptionFields:
+    def setup_method(self):
+        self.m = _fresh_import("browser")
+
+    def test_prefers_explicit_email_and_submit_types(self):
+        elements = [
+            {"tag": "input", "type": "text", "name": "name", "selector": "#name"},
+            {"tag": "input", "type": "email", "name": "email", "selector": "#email"},
+            {"tag": "button", "type": "submit", "text": "Send", "selector": "#send"},
+        ]
+        result = self.m.infer_subscription_fields(elements)
+        assert result["email"] == [{"css": "#email"}]
+        assert result["submit"] == [{"css": "#send"}]
+
+    def test_recognises_email_and_subscribe_hints(self):
+        elements = [
+            {"tag": "input", "type": "text", "placeholder": "Your email address", "selector": ".address"},
+            {"tag": "button", "type": "button", "text": "Subscribe now", "selector": ".join"},
+        ]
+        result = self.m.infer_subscription_fields(elements)
+        assert result["email"] == [{"css": ".address"}]
+        assert result["submit"] == [{"css": ".join"}]
+
+    def test_includes_only_required_checkboxes(self):
+        elements = [
+            {"tag": "input", "type": "email", "selector": "#email", "form_index": 0},
+            {"tag": "button", "type": "submit", "selector": "#submit", "form_index": 0},
+            {"tag": "input", "type": "checkbox", "required": True, "selector": "#consent", "form_index": 0},
+            {"tag": "input", "type": "checkbox", "required": False, "selector": "#offers", "form_index": 0},
+        ]
+        result = self.m.infer_subscription_fields(elements)
+        assert result["checkboxes"] == [{"css": "#consent"}]
+
+    def test_returns_empty_required_fields_when_not_confident(self):
+        result = self.m.infer_subscription_fields([
+            {"tag": "input", "type": "text", "name": "first_name", "selector": "#name"},
+            {"tag": "button", "type": "button", "text": "Cancel", "selector": "#cancel"},
+        ])
+        assert result["email"] == []
+        assert result["submit"] == []
+
+    def test_does_not_pair_controls_from_different_forms(self):
+        result = self.m.infer_subscription_fields([
+            {"tag": "input", "type": "email", "selector": "#email", "form_index": 0},
+            {"tag": "button", "type": "submit", "selector": "#submit", "form_index": 1},
+        ])
+        assert result["email"] == []
+        assert result["submit"] == []
+
+    def test_uses_label_and_form_context_for_text_email_input(self):
+        result = self.m.infer_subscription_fields([
+            {
+                "tag": "input", "type": "text", "label_text": "Enter your email",
+                "form_text": "Enter your email", "selector": "form.signup input[required]",
+                "form_index": 0,
+            },
+            {
+                "tag": "button", "type": "button",
+                "aria_label": "Sign up for the newsletter you selected",
+                "selector": "form.signup button[aria-label='Sign up']",
+                "form_index": 0, "displayed": False,
+            },
+        ])
+        assert result["email"] == [{"css": "form.signup input[required]"}]
+        assert result["submit"] == [{"css": "form.signup button[aria-label='Sign up']"}]
+
+    def test_rejects_email_submit_pair_from_password_form(self):
+        result = self.m.infer_subscription_fields([
+            {
+                "tag": "input", "type": "email", "selector": "#email",
+                "form_index": 0,
+            },
+            {
+                "tag": "input", "type": "password", "selector": "#password",
+                "form_index": 0,
+            },
+            {
+                "tag": "button", "type": "submit", "text": "Continue",
+                "selector": "#continue", "form_index": 0,
+            },
+        ])
+        assert result["email"] == []
+        assert result["submit"] == []
+
+    def test_does_not_treat_first_name_as_email_from_shared_form_text(self):
+        result = self.m.infer_subscription_fields([
+            {
+                "tag": "input", "type": "text", "id": "first_name",
+                "form_text": "Subscribe with your email to our newsletter",
+                "selector": "#first_name", "form_index": 0,
+            },
+            {
+                "tag": "input", "type": "text", "id": "email",
+                "form_text": "Subscribe with your email to our newsletter",
+                "selector": "#email", "form_index": 0,
+            },
+            {
+                "tag": "button", "type": "submit", "text": "Subscribe",
+                "selector": "#submit", "form_index": 0,
+            },
+        ])
+        assert result["email"] == [{"css": "#email"}]
+        assert result["submit"] == [{"css": "#submit"}]
+
+    def test_preserves_selector_occurrence_for_hidden_duplicate(self):
+        result = self.m.infer_subscription_fields([
+            {
+                "tag": "input", "type": "email", "selector": 'input[name="email"]',
+                "selector_index": 2, "form_index": 0,
+            },
+            {
+                "tag": "button", "type": "submit", "text": "Subscribe",
+                "selector": 'button[type="submit"]', "selector_index": 1,
+                "form_index": 0,
+            },
+        ])
+        assert result["email"] == [{"css": 'input[name="email"]', "index": 2}]
+        assert result["submit"] == [{"css": 'button[type="submit"]', "index": 1}]
+
+
+class TestRevealSubscriptionForm:
+    def setup_method(self):
+        self.m = _fresh_import("browser")
+
+    def test_returns_fields_with_replayable_safe_action(self):
+        driver = MagicMock()
+        action = {"css": 'button[data-list-id="4156"]'}
+        fields = {
+            "email": [{"css": "#email"}], "submit": [{"css": "#submit"}],
+            "pre_clicks": [],
+        }
+        with patch.object(self.m, "_reveal_candidates", return_value=[action]), \
+             patch.object(self.m, "_find_configured_element", return_value=MagicMock()), \
+             patch.object(self.m, "_collect_page_form_elements", return_value=[]), \
+             patch.object(self.m, "infer_subscription_fields", return_value=fields):
+            result = self.m.reveal_subscription_form(driver)
+        assert result["pre_clicks"] == [action]
+        driver.execute_script.assert_any_call("arguments[0].click();", ANY)
+
+    def test_detects_incapsula_challenge(self):
+        driver = MagicMock()
+        driver.page_source = '<iframe src="/_Incapsula_Resource"></iframe>'
+        driver.title = ""
+        driver.current_url = "https://example.com/newsletter"
+        assert self.m.detect_automation_block(driver) == "Incapsula challenge"
+
+
+# ===========================================================================
+# 14. add_subscription_url automatic setup
+# ===========================================================================
+
+class TestAddSubscriptionUrlInteractive:
+    def setup_method(self):
+        self.m = _fresh_import("modes")
+
+    def test_saves_inferred_fields_without_manual_prompts(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text("[]")
+        driver = MagicMock()
+        elements = [
+            {"tag": "input", "type": "email", "name": "email", "selector": "#email"},
+            {"tag": "button", "type": "submit", "text": "Subscribe", "selector": "#subscribe"},
+        ]
+
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.choose_subscription_urls", return_value=(["https://example.com/newsletter"], False)), \
+             patch("modes.create_driver", return_value=driver), \
+             patch("modes.fetch_form_elements", return_value=elements), \
+             patch("builtins.input", return_value=""):
+            self.m.add_subscription_url_interactive()
+
+        saved = json.loads(path.read_text())
+        assert saved[0]["url"] == "https://example.com/newsletter"
+        assert saved[0]["input_fields"]["email"] == [{"css": "#email"}]
+        assert saved[0]["input_fields"]["submit"] == [{"css": "#subscribe"}]
+        driver.quit.assert_called_once()
+
+    def test_dispatches_all_search_results_to_bulk_importer(self):
+        urls = ["https://a.com/", "https://b.com/"]
+        stats = {
+            "added": 2, "existing": 0, "invalid": 0,
+            "unrecognized": 0, "robots": 0, "blocked": 0,
+        }
+        with patch("modes.choose_subscription_urls", return_value=(urls, True)), \
+             patch("modes.auto_add_subscription_urls", return_value=stats) as auto_add:
+            self.m.add_subscription_url_interactive()
+        auto_add.assert_called_once_with(urls)
+
+
+class TestFullyAutomaticDiscoveryMode:
+    def setup_method(self):
+        self.m = _fresh_import("modes", {
+            "AUTO_SEARCH_QUERIES": "technology,finance newsletter",
+            "AUTO_RESULTS_PER_QUERY": "7",
+            "AUTO_TARGET_ADDITIONS": "10",
+            "AUTO_MAX_CANDIDATES": "10",
+            "AUTO_EXPAND_SEARCH_QUERIES": "false",
+            "AUTO_MIN_SEARCH_SCORE": "0.6",
+        })
+
+    def test_runs_all_queries_without_input_and_deduplicates(self):
+        stats = {
+            "added": 2, "existing": 0, "invalid": 0,
+            "unrecognized": 0, "robots": 0, "blocked": 0,
+        }
+        with patch("builtins.input", side_effect=AssertionError("unexpected prompt")), \
+             patch("modes.search_subscription_urls", side_effect=[
+                 ["https://a.com/", "https://shared.com/"],
+                 ["https://shared.com/", "https://b.com/"],
+             ]) as search, \
+             patch("modes.auto_add_subscription_urls", return_value=stats) as auto_add:
+            self.m.add_subscription_url()
+
+        assert search.call_args_list == [
+            call(
+                "technology newsletter subscribe email signup",
+                limit=7,
+                min_score=0.6,
+            ),
+            call("finance newsletter", limit=7, min_score=0.6),
+        ]
+        assert auto_add.call_args_list == [
+            call(
+                ["https://a.com/", "https://shared.com/"],
+                max_additions=10,
+            ),
+            call(["https://b.com/"], max_additions=8),
+        ]
+
+    def test_stops_searching_after_success_target_is_reached(self):
+        self.m.AUTO_TARGET_ADDITIONS = 3
+        with patch.object(
+            self.m, "_automatic_query_plan", return_value=["q1", "q2", "q3"]
+        ), patch("modes.search_subscription_urls", side_effect=[
+            ["https://a.com/", "https://b.com/"],
+            ["https://c.com/", "https://d.com/"],
+        ]) as search, patch("modes.auto_add_subscription_urls", side_effect=[
+            {
+                "added": 1, "existing": 1, "invalid": 0,
+                "unrecognized": 0, "robots": 0, "blocked": 0,
+            },
+            {
+                "added": 2, "existing": 0, "invalid": 0,
+                "unrecognized": 0, "robots": 0, "blocked": 0,
+            },
+        ]) as auto_add:
+            self.m.add_subscription_url()
+
+        assert search.call_count == 2
+        assert auto_add.call_args_list[-1] == call(
+            ["https://c.com/", "https://d.com/"], max_additions=2
+        )
+
+
+class TestMainMenuDispatch:
+    def setup_method(self):
+        self.m = _fresh_import("main")
+
+    def test_option_one_runs_fully_automatic_mode(self):
+        with patch.object(self.m, "load_subscription_urls", return_value=[]), \
+             patch.object(self.m, "add_subscription_url") as automatic, \
+             patch("builtins.input", side_effect=["1", "6"]):
+            self.m.main()
+        automatic.assert_called_once_with()
+
+    def test_refreshes_counts_after_automatic_discovery(self, capsys):
+        state = {"added": False}
+
+        def loaded(*, verified_only=False, unverified_only=False):
+            if verified_only:
+                return []
+            if unverified_only:
+                return [{"url": "https://new.example"}] if state["added"] else []
+            return []
+
+        def automatic():
+            state["added"] = True
+
+        with patch.object(self.m, "load_subscription_urls", side_effect=loaded), \
+             patch.object(self.m, "add_subscription_url", side_effect=automatic), \
+             patch("builtins.input", side_effect=["1", "6"]):
+            self.m.main()
+
+        output = capsys.readouterr().out
+        assert "Current unverified URLs: 0" in output
+        assert "Current unverified URLs: 1" in output
+
+
+class TestAutoAddSubscriptionUrls:
+    def setup_method(self):
+        self.m = _fresh_import("modes")
+
+    def test_adds_all_detected_forms_and_skips_bad_results(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text(json.dumps([
+            {"url": "https://existing.com/", "verified": False, "input_fields": {}}
+        ]))
+        driver = MagicMock()
+        good_elements = [
+            {"tag": "input", "type": "email", "name": "email", "selector": "#email"},
+            {"tag": "button", "type": "submit", "text": "Subscribe", "selector": "#join"},
+        ]
+
+        def elements_for(url, _driver):
+            if "broken.com" in url:
+                raise RuntimeError("renderer crashed")
+            return good_elements if "new.com" in url else []
+
+        urls = [
+            "https://existing.com",
+            "https://new.com/newsletter/",
+            "https://NEW.com/newsletter#form",
+            "https://not-a-form.com/article",
+            "https://broken.com/newsletter",
+            "javascript:alert(1)",
+        ]
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver", return_value=driver) as create_driver, \
+             patch("modes.fetch_form_elements", side_effect=elements_for):
+            stats = self.m.auto_add_subscription_urls(urls)
+
+        assert stats == {
+            "added": 1, "existing": 2, "invalid": 1,
+            "unrecognized": 2, "robots": 0, "blocked": 0,
+        }
+        saved = json.loads(path.read_text())
+        assert [entry["url"] for entry in saved] == [
+            "https://existing.com/", "https://new.com/newsletter"
+        ]
+        assert saved[1]["input_fields"]["email"] == [{"css": "#email"}]
+        assert saved[1]["verified"] is False
+        create_driver.assert_called_once_with(headless=True, discovery=True)
+        driver.quit.assert_called_once()
+
+    def test_does_not_open_browser_when_every_url_exists(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text(json.dumps([{"url": "https://existing.com/"}]))
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver") as create_driver:
+            stats = self.m.auto_add_subscription_urls(["https://existing.com"])
+        assert stats["added"] == 0
+        assert stats["existing"] == 1
+        create_driver.assert_not_called()
+
+    def test_follows_likely_link_and_saves_resolved_url(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text("[]")
+        driver = MagicMock()
+        fields = {
+            "email": [{"css": "#email"}], "submit": [{"css": "#join"}],
+            "username": [], "phone": [], "radios": [], "checkboxes": [],
+            "selections": [], "wait": 0,
+        }
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver", return_value=driver), \
+             patch("modes._inspect_newsletter_page", side_effect=[None, fields]), \
+             patch("modes.find_subscription_links", return_value=[
+                 "https://example.com/newsletter"
+             ]):
+            stats = self.m.auto_add_subscription_urls(
+                ["https://example.com/article"],
+                respect_robots=False,
+                request_delay=0,
+            )
+        assert stats["added"] == 1
+        saved = json.loads(path.read_text())
+        assert saved[0]["url"] == "https://example.com/newsletter"
+
+    def test_rejects_page_redirected_to_login(self):
+        driver = MagicMock()
+        driver.current_url = "https://example.com/login?redirect=/newsletter"
+        elements = [
+            {"tag": "input", "type": "email", "selector": "#email"},
+            {"tag": "button", "type": "submit", "selector": "#continue"},
+        ]
+        with patch("modes.fetch_form_elements", return_value=elements), \
+             patch("modes.reveal_subscription_form") as reveal:
+            assert self.m._inspect_newsletter_page(
+                "https://example.com/newsletter", driver
+            ) is None
+        reveal.assert_not_called()
+
+    def test_saves_final_url_after_external_redirect(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text("[]")
+        driver = MagicMock()
+        driver.current_url = "https://publisher.example/newsletter"
+        fields = {
+            "email": [{"css": "#email"}], "submit": [{"css": "#join"}],
+            "username": [], "phone": [], "radios": [], "checkboxes": [],
+            "selections": [], "pre_clicks": [], "wait": 0,
+        }
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver", return_value=driver), \
+             patch("modes._inspect_newsletter_page", return_value=fields), \
+             patch("modes.validate_subscription_mapping", return_value=True):
+            stats = self.m.auto_add_subscription_urls(
+                ["https://redirector.example/out"],
+                follow_links=False,
+                respect_robots=False,
+                request_delay=0,
+            )
+        assert stats["added"] == 1
+        assert json.loads(path.read_text())[0]["url"] == (
+            "https://publisher.example/newsletter"
+        )
+
+    def test_does_not_save_mapping_that_fails_fresh_load_replay(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text("[]")
+        driver = MagicMock()
+        fields = {
+            "email": [{"css": "#ephemeral-email"}],
+            "submit": [{"css": "#ephemeral-submit"}],
+        }
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver", return_value=driver), \
+             patch("modes._inspect_newsletter_page", return_value=fields), \
+             patch("modes.validate_subscription_mapping", return_value=False):
+            stats = self.m.auto_add_subscription_urls(
+                ["https://example.com/newsletter"],
+                follow_links=False,
+                respect_robots=False,
+                request_delay=0,
+            )
+        assert stats["added"] == 0
+        assert stats["unrecognized"] == 1
+        assert json.loads(path.read_text()) == []
+
+    def test_checkpoints_success_before_later_interruption(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text("[]")
+        driver = MagicMock()
+        fields = {
+            "email": [{"css": "#email"}], "submit": [{"css": "#join"}],
+            "username": [], "phone": [], "radios": [], "checkboxes": [],
+            "selections": [], "pre_clicks": [], "wait": 0,
+        }
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver", return_value=driver), \
+             patch("modes._inspect_newsletter_page", side_effect=[
+                 fields, KeyboardInterrupt(),
+             ]), pytest.raises(KeyboardInterrupt):
+            self.m.auto_add_subscription_urls(
+                ["https://one.example/newsletter", "https://two.example/newsletter"],
+                follow_links=False,
+                respect_robots=False,
+                request_delay=0,
+            )
+
+        saved = json.loads(path.read_text())
+        assert [entry["url"] for entry in saved] == [
+            "https://one.example/newsletter"
+        ]
+
+
+class TestRobotsPolicy:
+    def setup_method(self):
+        self.m = _fresh_import("modes")
+
+    def test_caches_and_obeys_robots_policy(self):
+        parser = MagicMock()
+        parser.can_fetch.return_value = False
+        cache = {}
+        with patch("modes.RobotFileParser", return_value=parser) as parser_cls:
+            assert self.m._robots_allowed(
+                "https://example.com/newsletter", cache
+            ) is False
+            assert self.m._robots_allowed(
+                "https://example.com/another", cache
+            ) is False
+        parser_cls.assert_called_once_with("https://example.com/robots.txt")
+        parser.read.assert_called_once()
+
+
+# ===========================================================================
+# 15. pick_selectors_interactively
 # ===========================================================================
 
 SAMPLE_ELEMENTS = [
