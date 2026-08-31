@@ -11,11 +11,14 @@ Responsibilities:
 """
 import time
 import random
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
+from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
-from undetected_geckodriver import Firefox
+from selenium.webdriver.support.ui import WebDriverWait
 
+from config import AUTO_PAGE_WAIT, AUTO_ROBOTS_USER_AGENT
 from selector_utils import selector_from_config, parse_css_selector_list
 
 
@@ -23,12 +26,17 @@ from selector_utils import selector_from_config, parse_css_selector_list
 # Driver
 # ---------------------------------------------------------------------------
 
-def create_driver(headless: bool = False) -> Firefox:
+def create_driver(headless: bool = False, discovery: bool = False) -> Firefox:
     options = Options()
     if headless:
         options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    if discovery:
+        options.set_preference(
+            "general.useragent.override",
+            f"Mozilla/5.0 (compatible; {AUTO_ROBOTS_USER_AGENT}/1.0)",
+        )
     return Firefox(options=options)
 
 
@@ -42,6 +50,16 @@ def type_with_delay(element, text: str, delay: float = 0.05) -> None:
     for char in text:
         element.send_keys(char)
         time.sleep(delay)
+
+
+def _find_configured_element(driver, field: dict):
+    """Locate a configured element, entering its iframe when necessary."""
+    driver.switch_to.default_content()
+    frame_index = field.get("frame_index")
+    if isinstance(frame_index, int):
+        frames = driver.find_elements(By.CSS_SELECTOR, "iframe, frame")
+        driver.switch_to.frame(frames[frame_index])
+    return driver.find_element(By.CSS_SELECTOR, selector_from_config(field))
 
 
 # ---------------------------------------------------------------------------
@@ -64,10 +82,12 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
             if not css:
                 continue
             try:
-                el = driver.find_element(By.CSS_SELECTOR, css)
+                el = _find_configured_element(driver, checkbox)
                 driver.execute_script("arguments[0].click();", el)
             except Exception as ex:
                 print(f"Checkbox not found/skipped ({css}): {ex}")
+            finally:
+                driver.switch_to.default_content()
 
         # Email field(s)
         for email_field in input_fields.get("email", []):
@@ -75,11 +95,13 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
             if not css:
                 continue
             try:
-                el = driver.find_element(By.CSS_SELECTOR, css)
+                el = _find_configured_element(driver, email_field)
                 type_with_delay(el, email, delay=random.uniform(0.03, 0.05))
                 print(f"Filled email in field: {email_field}")
             except Exception as ex:
                 print(f"Email field not found/skipped ({css}): {ex}")
+            finally:
+                driver.switch_to.default_content()
 
         # Radio buttons
         for radio in input_fields.get("radios", []):
@@ -87,10 +109,12 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
             if not css:
                 continue
             try:
-                el = driver.find_element(By.CSS_SELECTOR, css)
+                el = _find_configured_element(driver, radio)
                 driver.execute_script("arguments[0].click();", el)
             except Exception as ex:
                 print(f"Radio not found/skipped ({css}): {ex}")
+            finally:
+                driver.switch_to.default_content()
 
         # Submit button
         for submit_field in input_fields.get("submit", []):
@@ -98,7 +122,7 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
             if not css:
                 continue
             try:
-                el = driver.find_element(By.CSS_SELECTOR, css)
+                el = _find_configured_element(driver, submit_field)
                 driver.execute_script("arguments[0].click();", el)
                 print(f"Clicked submit button: {submit_field}")
                 wait_time = input_fields.get("wait", 0)
@@ -109,6 +133,8 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
                 return True
             except Exception as ex:
                 print(f"Submit selector not found/skipped ({css}): {ex}")
+            finally:
+                driver.switch_to.default_content()
 
         print(f"Submit button not found for {url}")
         return False
@@ -121,23 +147,8 @@ def subscribe_email(email: str, url: str, input_fields: dict, driver) -> bool:
 # Form inspection
 # ---------------------------------------------------------------------------
 
-def fetch_form_elements(url: str, driver) -> list[dict]:
-    """
-    Navigate to *url*, wait for JS to settle, then collect every interactive
-    form element (input, select, textarea, button).  Hidden inputs are skipped.
-
-    Each element is described as a dict with keys:
-        tag, type, id, name, class, placeholder, autocomplete, required,
-        value, text, selector
-    The *selector* is the most specific CSS selector derivable from the element.
-    """
-    try:
-        driver.get(url)
-        time.sleep(2)
-    except Exception as exc:
-        print(f"Failed to load {url}: {exc}")
-        return []
-
+def _collect_form_elements(driver, frame_index: int | None = None) -> list[dict]:
+    """Collect form controls from the driver's current browsing context."""
     elements = []
     for tag in ("input", "select", "textarea", "button"):
         try:
@@ -146,16 +157,29 @@ def fetch_form_elements(url: str, driver) -> list[dict]:
             continue
         for el in found:
             try:
+                if el.is_displayed() is False:
+                    continue
                 el_type        = (el.get_attribute("type") or tag).lower()
                 el_id          = el.get_attribute("id") or ""
                 el_name        = el.get_attribute("name") or ""
                 el_class       = (el.get_attribute("class") or "").strip()
                 el_placeholder = el.get_attribute("placeholder") or ""
                 el_autocomplete = el.get_attribute("autocomplete") or ""
-                required_attr   = el.get_attribute("required")
-                el_required     = bool(required_attr) and str(required_attr).lower() != "false"
+                el_aria_label  = el.get_attribute("aria-label") or ""
+                required_attr  = el.get_attribute("required")
+                el_required    = (
+                    bool(required_attr)
+                    and str(required_attr).lower() != "false"
+                )
                 el_value       = el.get_attribute("value") or ""
-                el_text        = (el.text or "").strip()[:50]
+                el_text        = (el.text or "").strip()[:100]
+                form_index = driver.execute_script(
+                    "return arguments[0].form ? "
+                    "Array.from(document.forms).indexOf(arguments[0].form) : -1;",
+                    el,
+                )
+                if not isinstance(form_index, int):
+                    form_index = -1
 
                 if el_type == "hidden":
                     continue
@@ -166,25 +190,121 @@ def fetch_form_elements(url: str, driver) -> list[dict]:
                     css = f'{tag}[name="{el_name}"]'
                 elif el_class:
                     css = f"{tag}.{el_class.split()[0]}"
+                elif tag == "input" and el_type not in ("input", "text"):
+                    css = f'input[type="{el_type}"]'
+                elif tag == "button" and el_type == "submit":
+                    css = 'button[type="submit"]'
                 else:
                     css = tag
 
                 elements.append({
-                    "tag":         tag,
-                    "type":        el_type,
-                    "id":          el_id,
-                    "name":        el_name,
-                    "class":       el_class,
-                    "placeholder": el_placeholder,
+                    "tag":          tag,
+                    "type":         el_type,
+                    "id":           el_id,
+                    "name":         el_name,
+                    "class":        el_class,
+                    "placeholder":  el_placeholder,
                     "autocomplete": el_autocomplete,
-                    "required":    el_required,
-                    "value":       el_value,
-                    "text":        el_text,
-                    "selector":    css,
+                    "aria_label":   el_aria_label,
+                    "required":     el_required,
+                    "value":        el_value,
+                    "text":         el_text,
+                    "selector":     css,
+                    "frame_index":  frame_index,
+                    "form_index":   form_index,
                 })
             except Exception:
                 continue
     return elements
+
+
+def fetch_form_elements(url: str, driver) -> list[dict]:
+    """
+    Navigate to *url*, wait for JS to settle, then collect every interactive
+    form element (input, select, textarea, button).  Hidden inputs are skipped.
+
+    Each element is described as a dict with keys:
+        tag, type, id, name, class, placeholder, autocomplete, aria_label,
+        required, value, text, selector, frame_index, form_index
+    The *selector* is the most specific CSS selector derivable from the element.
+    """
+    try:
+        driver.get(url)
+        try:
+            WebDriverWait(driver, AUTO_PAGE_WAIT).until(
+                lambda current: current.execute_script(
+                    "return document.readyState"
+                ) in ("interactive", "complete")
+            )
+        except Exception:
+            pass
+    except Exception as exc:
+        print(f"Failed to load {url}: {exc}")
+        return []
+
+    driver.switch_to.default_content()
+    elements = _collect_form_elements(driver)
+    try:
+        frames = driver.find_elements(By.CSS_SELECTOR, "iframe, frame")
+    except Exception:
+        frames = []
+    for frame_index, frame in enumerate(frames):
+        try:
+            driver.switch_to.frame(frame)
+            elements.extend(_collect_form_elements(driver, frame_index))
+        except Exception:
+            continue
+        finally:
+            driver.switch_to.default_content()
+    return elements
+
+
+def find_subscription_links(base_url: str, driver, limit: int = 3) -> list[str]:
+    """Rank same-site links that are likely to lead to a newsletter form."""
+    if limit <= 0:
+        return []
+    try:
+        anchors = driver.find_elements(By.CSS_SELECTOR, "a[href]")
+    except Exception:
+        return []
+
+    base = urlsplit(base_url)
+    ranked = []
+    seen = set()
+    positive_terms = (
+        "newsletter", "subscribe", "subscription", "sign-up", "signup",
+        "email-updates", "email updates", "mailing-list", "mailing list",
+    )
+    for index, anchor in enumerate(anchors):
+        try:
+            href = anchor.get_attribute("href") or ""
+            absolute = urlsplit(urljoin(base_url, href))
+            if (
+                absolute.scheme not in ("http", "https")
+                or absolute.hostname != base.hostname
+            ):
+                continue
+            url = urlunsplit((
+                absolute.scheme.lower(), absolute.netloc.lower(),
+                absolute.path or "/", absolute.query, "",
+            ))
+            if url == base_url or url in seen:
+                continue
+            text = " ".join((
+                absolute.path, absolute.query, anchor.text or "",
+                anchor.get_attribute("title") or "",
+                anchor.get_attribute("aria-label") or "",
+            )).lower()
+            if "unsubscribe" in text:
+                continue
+            score = sum(1 for term in positive_terms if term in text)
+            if score:
+                ranked.append((score, -index, url))
+                seen.add(url)
+        except Exception:
+            continue
+    ranked.sort(reverse=True)
+    return [item[2] for item in ranked[:limit]]
 
 
 def infer_subscription_fields(elements: list[dict]) -> dict:
@@ -200,17 +320,22 @@ def infer_subscription_fields(elements: list[dict]) -> dict:
     def text_for(element: dict) -> str:
         keys = (
             "id", "name", "class", "placeholder", "autocomplete",
-            "value", "text",
+            "aria_label", "value", "text",
         )
         return " ".join(str(element.get(key, "")) for key in keys).lower()
 
     def selector_for(element: dict) -> list[dict]:
         selector = str(element.get("selector", "")).strip()
-        return [{"css": selector}] if selector else []
+        if not selector:
+            return []
+        configured = {"css": selector}
+        frame_index = element.get("frame_index")
+        if isinstance(frame_index, int):
+            configured["frame_index"] = frame_index
+        return [configured]
 
     email_candidates = []
     submit_candidates = []
-    consent_checkboxes = []
 
     for index, element in enumerate(elements):
         tag = str(element.get("tag", "")).lower()
@@ -244,17 +369,52 @@ def infer_subscription_fields(elements: list[dict]) -> dict:
             if submit_score >= 60:
                 submit_candidates.append((submit_score, -index, element))
 
-        if field_type == "checkbox" and element.get("required"):
-            consent_checkboxes.extend(selector_for(element))
+    pairs = []
+    for email_score, email_order, email_element in email_candidates:
+        for submit_score, submit_order, submit_element in submit_candidates:
+            if email_element.get("frame_index") != submit_element.get("frame_index"):
+                continue
+            email_form = email_element.get("form_index", -1)
+            submit_form = submit_element.get("form_index", -1)
+            if email_form != submit_form and (
+                email_form >= 0 or submit_form >= 0
+            ):
+                continue
+            same_form_bonus = 100 if email_form >= 0 and email_form == submit_form else 0
+            pairs.append((
+                email_score + submit_score + same_form_bonus,
+                email_order + submit_order,
+                email_element,
+                submit_element,
+            ))
 
-    email_candidates.sort(reverse=True, key=lambda item: (item[0], item[1]))
-    submit_candidates.sort(reverse=True, key=lambda item: (item[0], item[1]))
+    pairs.sort(reverse=True, key=lambda item: (item[0], item[1]))
+    if pairs:
+        _, _, selected_email, selected_submit = pairs[0]
+        selected_frame = selected_email.get("frame_index")
+        selected_form = selected_email.get("form_index", -1)
+        consent_checkboxes = []
+        for element in elements:
+            if (
+                str(element.get("type", "")).lower() == "checkbox"
+                and element.get("required")
+                and element.get("frame_index") == selected_frame
+                and (
+                    selected_form < 0
+                    or element.get("form_index", -1) == selected_form
+                )
+            ):
+                consent_checkboxes.extend(selector_for(element))
+    else:
+        selected_email = None
+        selected_submit = None
+        consent_checkboxes = []
 
     return {
-        "email": selector_for(email_candidates[0][2]) if email_candidates else [],
+        "email": selector_for(selected_email) if selected_email else [],
         "username": [],
         "phone": [],
-        "submit": selector_for(submit_candidates[0][2]) if submit_candidates else [],
+        "submit": selector_for(selected_submit) if selected_submit else [],
         "radios": [],
         "checkboxes": consent_checkboxes,
         "selections": [],

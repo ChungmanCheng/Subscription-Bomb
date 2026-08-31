@@ -12,10 +12,13 @@ from config import (
     SEARCH_API_KEY,
     SEARCH_API_METHOD,
     SEARCH_API_KEY_HEADER,
+    SEARCH_API_KEY_PREFIX,
     SEARCH_API_KEY_BODY_FIELD,
     SEARCH_API_QUERY_PARAM,
     SEARCH_API_RESULTS_PATH,
     SEARCH_API_URL_FIELD,
+    SEARCH_API_SCORE_FIELD,
+    SEARCH_API_MAX_RESULTS_FIELD,
     USER_AGENT,
 )
 from selector_utils import get_nested_value
@@ -56,7 +59,17 @@ def normalize_subscription_url(url: str) -> str | None:
     return urlunsplit((scheme, netloc, path, parts.query, ""))
 
 
-def search_subscription_urls(query: str, limit: int = 5) -> list[str]:
+def newsletter_search_query(topic: str) -> str:
+    """Turn a topic into a query aimed at actual subscription pages."""
+    query = " ".join(topic.split())
+    lowered = query.lower()
+    if not any(term in lowered for term in ("newsletter", "subscribe", "sign up")):
+        query = f"{query} newsletter subscribe email signup"
+    return query
+
+
+def search_subscription_urls(query: str, limit: int = 5,
+                             min_score: float | None = None) -> list[str]:
     """
     Query the configured search API for newsletter subscription page URLs.
 
@@ -67,15 +80,23 @@ def search_subscription_urls(query: str, limit: int = 5) -> list[str]:
         print("Search API is not configured. Set SEARCH_API_URL in .env first.")
         return []
 
+    limit = max(1, min(20, limit))
     headers = {"User-Agent": USER_AGENT}
+    api_key_header_value = (
+        f"{SEARCH_API_KEY_PREFIX} {SEARCH_API_KEY}"
+        if SEARCH_API_KEY_PREFIX
+        else SEARCH_API_KEY
+    )
 
     if SEARCH_API_METHOD == "POST":
         body = {SEARCH_API_QUERY_PARAM: query}
         if SEARCH_API_KEY and SEARCH_API_KEY_BODY_FIELD:
             body[SEARCH_API_KEY_BODY_FIELD] = SEARCH_API_KEY
         elif SEARCH_API_KEY:
-            headers[SEARCH_API_KEY_HEADER] = SEARCH_API_KEY
+            headers[SEARCH_API_KEY_HEADER] = api_key_header_value
         headers["Content-Type"] = "application/json"
+        if SEARCH_API_MAX_RESULTS_FIELD:
+            body[SEARCH_API_MAX_RESULTS_FIELD] = limit
         request = Request(
             SEARCH_API_URL,
             data=json.dumps(body).encode("utf-8"),
@@ -84,9 +105,11 @@ def search_subscription_urls(query: str, limit: int = 5) -> list[str]:
         )
     else:
         params = {SEARCH_API_QUERY_PARAM: query}
+        if SEARCH_API_MAX_RESULTS_FIELD:
+            params[SEARCH_API_MAX_RESULTS_FIELD] = limit
         request_url = f"{SEARCH_API_URL}?{urlencode(params)}"
         if SEARCH_API_KEY:
-            headers[SEARCH_API_KEY_HEADER] = SEARCH_API_KEY
+            headers[SEARCH_API_KEY_HEADER] = api_key_header_value
         request = Request(request_url, headers=headers)
 
     try:
@@ -109,6 +132,17 @@ def search_subscription_urls(query: str, limit: int = 5) -> list[str]:
             if isinstance(item, dict)
             else item
         )
+        score = (
+            get_nested_value(item, SEARCH_API_SCORE_FIELD)
+            if isinstance(item, dict)
+            else None
+        )
+        if (
+            min_score is not None
+            and isinstance(score, (int, float))
+            and score < min_score
+        ):
+            continue
         normalized = normalize_subscription_url(result_url)
         if normalized and normalized not in seen:
             urls.append(normalized)

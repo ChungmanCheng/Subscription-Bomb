@@ -9,7 +9,7 @@ import sys
 import time
 import email as email_module
 from email.mime.text import MIMEText
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -27,7 +27,8 @@ _PROJECT_MODULES = (
 def _stub_heavy_deps():
     for mod in ("selenium", "selenium.webdriver", "selenium.webdriver.common",
                 "selenium.webdriver.common.by", "selenium.webdriver.firefox",
-                "selenium.webdriver.firefox.options", "undetected_geckodriver",
+                "selenium.webdriver.firefox.options", "selenium.webdriver.support",
+                "selenium.webdriver.support.ui", "undetected_geckodriver",
                 "dotenv"):
         if mod not in sys.modules:
             sys.modules[mod] = MagicMock()
@@ -45,10 +46,22 @@ def _fresh_import(module_name: str, env_overrides: dict | None = None):
         "SEARCH_API_KEY": "",
         "SEARCH_API_METHOD": "GET",
         "SEARCH_API_KEY_HEADER": "X-API-Key",
+        "SEARCH_API_KEY_PREFIX": "",
         "SEARCH_API_KEY_BODY_FIELD": "",
         "SEARCH_API_QUERY_PARAM": "q",
         "SEARCH_API_RESULTS_PATH": "results",
         "SEARCH_API_URL_FIELD": "url",
+        "SEARCH_API_SCORE_FIELD": "score",
+        "SEARCH_API_MAX_RESULTS_FIELD": "",
+        "AUTO_SEARCH_QUERIES": "newsletter subscribe",
+        "AUTO_RESULTS_PER_QUERY": "10",
+        "AUTO_MAX_URLS": "50",
+        "AUTO_MIN_SEARCH_SCORE": "0.5",
+        "AUTO_FOLLOW_LINKS": "true",
+        "AUTO_LINKS_PER_PAGE": "3",
+        "AUTO_RESPECT_ROBOTS": "false",
+        "AUTO_REQUEST_DELAY": "0",
+        "AUTO_PAGE_WAIT": "5",
         "IMAP_HOST": "",
         "IMAP_PORT": "993",
         "IMAP_USER": "",
@@ -263,6 +276,15 @@ class TestSearchSubscriptionUrlsGet:
             urls = self.m.search_subscription_urls("newsletter")
         assert urls == ["https://x.com/newsletter"]
 
+    def test_supports_bearer_authentication_prefix(self):
+        payload = {"results": []}
+        self.m.SEARCH_API_KEY_HEADER = "Authorization"
+        self.m.SEARCH_API_KEY_PREFIX = "Bearer"
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)) as opened:
+            self.m.search_subscription_urls("newsletter")
+        request = opened.call_args[0][0]
+        assert request.headers["Authorization"] == "Bearer key123"
+
 
 # ===========================================================================
 # 6. search_subscription_urls – POST mode (Tavily)
@@ -278,6 +300,7 @@ class TestSearchSubscriptionUrlsPost:
             "SEARCH_API_KEY_BODY_FIELD": "api_key",
             "SEARCH_API_RESULTS_PATH": "results",
             "SEARCH_API_URL_FIELD": "url",
+            "SEARCH_API_MAX_RESULTS_FIELD": "max_results",
         })
 
     def _mock_response(self, payload):
@@ -295,12 +318,25 @@ class TestSearchSubscriptionUrlsPost:
             body = json.loads(req.data.decode())
             assert body["query"] == "test query"
             assert body["api_key"] == "tvly-key"
+            assert body["max_results"] == 5
 
     def test_returns_urls_from_post_response(self):
         payload = {"results": [{"url": "https://a.com"}, {"url": "https://b.com"}]}
         with patch("search_api.urlopen", return_value=self._mock_response(payload)):
             urls = self.m.search_subscription_urls("newsletters")
         assert urls == ["https://a.com/", "https://b.com/"]
+
+    def test_filters_numeric_scores_below_threshold(self):
+        payload = {"results": [
+            {"url": "https://low.com", "score": 0.2},
+            {"url": "https://high.com", "score": 0.8},
+            {"url": "https://missing-score.com"},
+        ]}
+        with patch("search_api.urlopen", return_value=self._mock_response(payload)):
+            urls = self.m.search_subscription_urls(
+                "newsletters", min_score=0.5
+            )
+        assert urls == ["https://high.com/", "https://missing-score.com/"]
 
 
 # ===========================================================================
@@ -548,6 +584,37 @@ class TestSubscribeEmail:
         self.m.subscribe_email("a@b.com", "https://example.com", input_fields, driver)
         assert call_order.index("#agree") < call_order.index("input[type='email']")
 
+    def test_switches_into_configured_iframe(self):
+        driver = self._make_driver()
+        frame = MagicMock()
+        driver.find_elements.return_value = [frame]
+        input_fields = {
+            "email": [{"css": "#email", "frame_index": 0}],
+            "submit": [{"css": "#submit", "frame_index": 0}],
+        }
+        assert self.m.subscribe_email(
+            "a@b.com", "https://x.com", input_fields, driver
+        ) is True
+        assert driver.switch_to.frame.call_count == 2
+        driver.switch_to.frame.assert_any_call(frame)
+
+
+class TestCreateDriver:
+    def setup_method(self):
+        self.m = _fresh_import("browser")
+
+    def test_discovery_driver_uses_identifiable_user_agent(self):
+        options = MagicMock()
+        with patch.object(self.m, "Options", return_value=options), \
+             patch.object(self.m, "Firefox") as firefox:
+            self.m.create_driver(headless=True, discovery=True)
+        options.add_argument.assert_any_call("--headless")
+        options.set_preference.assert_called_once_with(
+            "general.useragent.override",
+            "Mozilla/5.0 (compatible; SubscriptionBot/1.0)",
+        )
+        firefox.assert_called_once_with(options=options)
+
 
 # ===========================================================================
 # 10. modify_subscription_file – toggle and delete
@@ -671,6 +738,65 @@ class TestFetchFormElements:
         tags = [r["tag"] for r in result]
         assert "input" in tags and "button" in tags
 
+    def test_collects_controls_inside_iframe(self):
+        email = _make_mock_element("input", el_type="email", el_id="email")
+        frame = MagicMock()
+        in_frame = False
+        driver = MagicMock()
+
+        def enter_frame(_):
+            nonlocal in_frame
+            in_frame = True
+
+        def leave_frame():
+            nonlocal in_frame
+            in_frame = False
+
+        def find_elements(_by, selector):
+            if selector == "iframe, frame":
+                return [frame]
+            if selector == "input" and in_frame:
+                return [email]
+            return []
+
+        def execute_script(script, *_args):
+            return "complete" if "readyState" in script else 0
+
+        driver.find_elements.side_effect = find_elements
+        driver.switch_to.frame.side_effect = enter_frame
+        driver.switch_to.default_content.side_effect = leave_frame
+        driver.execute_script.side_effect = execute_script
+
+        result = self.m.fetch_form_elements("https://x.com", driver)
+        assert result[0]["selector"] == "#email"
+        assert result[0]["frame_index"] == 0
+
+
+class TestFindSubscriptionLinks:
+    def setup_method(self):
+        self.m = _fresh_import("browser")
+
+    @staticmethod
+    def _anchor(href, text=""):
+        anchor = MagicMock()
+        anchor.text = text
+        anchor.get_attribute.side_effect = lambda name: {
+            "href": href, "title": "", "aria-label": "",
+        }.get(name, "")
+        return anchor
+
+    def test_ranks_same_site_newsletter_links(self):
+        driver = MagicMock()
+        driver.find_elements.return_value = [
+            self._anchor("https://example.com/about", "About"),
+            self._anchor("/newsletter", "Subscribe to our newsletter"),
+            self._anchor("/unsubscribe", "Unsubscribe"),
+            self._anchor("https://other.com/newsletter", "Newsletter"),
+        ]
+        assert self.m.find_subscription_links(
+            "https://example.com/article", driver
+        ) == ["https://example.com/newsletter"]
+
 
 # ===========================================================================
 # 12. infer_subscription_fields
@@ -701,8 +827,10 @@ class TestInferSubscriptionFields:
 
     def test_includes_only_required_checkboxes(self):
         elements = [
-            {"tag": "input", "type": "checkbox", "required": True, "selector": "#consent"},
-            {"tag": "input", "type": "checkbox", "required": False, "selector": "#offers"},
+            {"tag": "input", "type": "email", "selector": "#email", "form_index": 0},
+            {"tag": "button", "type": "submit", "selector": "#submit", "form_index": 0},
+            {"tag": "input", "type": "checkbox", "required": True, "selector": "#consent", "form_index": 0},
+            {"tag": "input", "type": "checkbox", "required": False, "selector": "#offers", "form_index": 0},
         ]
         result = self.m.infer_subscription_fields(elements)
         assert result["checkboxes"] == [{"css": "#consent"}]
@@ -715,12 +843,20 @@ class TestInferSubscriptionFields:
         assert result["email"] == []
         assert result["submit"] == []
 
+    def test_does_not_pair_controls_from_different_forms(self):
+        result = self.m.infer_subscription_fields([
+            {"tag": "input", "type": "email", "selector": "#email", "form_index": 0},
+            {"tag": "button", "type": "submit", "selector": "#submit", "form_index": 1},
+        ])
+        assert result["email"] == []
+        assert result["submit"] == []
+
 
 # ===========================================================================
 # 14. add_subscription_url automatic setup
 # ===========================================================================
 
-class TestAddSubscriptionUrlAutomatic:
+class TestAddSubscriptionUrlInteractive:
     def setup_method(self):
         self.m = _fresh_import("modes")
 
@@ -738,7 +874,7 @@ class TestAddSubscriptionUrlAutomatic:
              patch("modes.create_driver", return_value=driver), \
              patch("modes.fetch_form_elements", return_value=elements), \
              patch("builtins.input", return_value=""):
-            self.m.add_subscription_url()
+            self.m.add_subscription_url_interactive()
 
         saved = json.loads(path.read_text())
         assert saved[0]["url"] == "https://example.com/newsletter"
@@ -748,11 +884,61 @@ class TestAddSubscriptionUrlAutomatic:
 
     def test_dispatches_all_search_results_to_bulk_importer(self):
         urls = ["https://a.com/", "https://b.com/"]
-        stats = {"added": 2, "existing": 0, "invalid": 0, "unrecognized": 0}
+        stats = {
+            "added": 2, "existing": 0, "invalid": 0,
+            "unrecognized": 0, "robots": 0,
+        }
         with patch("modes.choose_subscription_urls", return_value=(urls, True)), \
              patch("modes.auto_add_subscription_urls", return_value=stats) as auto_add:
-            self.m.add_subscription_url()
+            self.m.add_subscription_url_interactive()
         auto_add.assert_called_once_with(urls)
+
+
+class TestFullyAutomaticDiscoveryMode:
+    def setup_method(self):
+        self.m = _fresh_import("modes", {
+            "AUTO_SEARCH_QUERIES": "technology,finance newsletter",
+            "AUTO_RESULTS_PER_QUERY": "7",
+            "AUTO_MAX_URLS": "10",
+            "AUTO_MIN_SEARCH_SCORE": "0.6",
+        })
+
+    def test_runs_all_queries_without_input_and_deduplicates(self):
+        stats = {
+            "added": 2, "existing": 0, "invalid": 0,
+            "unrecognized": 0, "robots": 0,
+        }
+        with patch("builtins.input", side_effect=AssertionError("unexpected prompt")), \
+             patch("modes.search_subscription_urls", side_effect=[
+                 ["https://a.com/", "https://shared.com/"],
+                 ["https://shared.com/", "https://b.com/"],
+             ]) as search, \
+             patch("modes.auto_add_subscription_urls", return_value=stats) as auto_add:
+            self.m.add_subscription_url()
+
+        assert search.call_args_list == [
+            call(
+                "technology newsletter subscribe email signup",
+                limit=7,
+                min_score=0.6,
+            ),
+            call("finance newsletter", limit=7, min_score=0.6),
+        ]
+        auto_add.assert_called_once_with([
+            "https://a.com/", "https://shared.com/", "https://b.com/"
+        ])
+
+
+class TestMainMenuDispatch:
+    def setup_method(self):
+        self.m = _fresh_import("main")
+
+    def test_option_one_runs_fully_automatic_mode(self):
+        with patch.object(self.m, "load_subscription_urls", return_value=[]), \
+             patch.object(self.m, "add_subscription_url") as automatic, \
+             patch("builtins.input", side_effect=["1", "6"]):
+            self.m.main()
+        automatic.assert_called_once_with()
 
 
 class TestAutoAddSubscriptionUrls:
@@ -789,7 +975,8 @@ class TestAutoAddSubscriptionUrls:
             stats = self.m.auto_add_subscription_urls(urls)
 
         assert stats == {
-            "added": 1, "existing": 2, "invalid": 1, "unrecognized": 2
+            "added": 1, "existing": 2, "invalid": 1,
+            "unrecognized": 2, "robots": 0,
         }
         saved = json.loads(path.read_text())
         assert [entry["url"] for entry in saved] == [
@@ -797,7 +984,7 @@ class TestAutoAddSubscriptionUrls:
         ]
         assert saved[1]["input_fields"]["email"] == [{"css": "#email"}]
         assert saved[1]["verified"] is False
-        create_driver.assert_called_once_with(headless=True)
+        create_driver.assert_called_once_with(headless=True, discovery=True)
         driver.quit.assert_called_once()
 
     def test_does_not_open_browser_when_every_url_exists(self, tmp_path):
@@ -809,6 +996,49 @@ class TestAutoAddSubscriptionUrls:
         assert stats["added"] == 0
         assert stats["existing"] == 1
         create_driver.assert_not_called()
+
+    def test_follows_likely_link_and_saves_resolved_url(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text("[]")
+        driver = MagicMock()
+        fields = {
+            "email": [{"css": "#email"}], "submit": [{"css": "#join"}],
+            "username": [], "phone": [], "radios": [], "checkboxes": [],
+            "selections": [], "wait": 0,
+        }
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.create_driver", return_value=driver), \
+             patch("modes._inspect_newsletter_page", side_effect=[None, fields]), \
+             patch("modes.find_subscription_links", return_value=[
+                 "https://example.com/newsletter"
+             ]):
+            stats = self.m.auto_add_subscription_urls(
+                ["https://example.com/article"],
+                respect_robots=False,
+                request_delay=0,
+            )
+        assert stats["added"] == 1
+        saved = json.loads(path.read_text())
+        assert saved[0]["url"] == "https://example.com/newsletter"
+
+
+class TestRobotsPolicy:
+    def setup_method(self):
+        self.m = _fresh_import("modes")
+
+    def test_caches_and_obeys_robots_policy(self):
+        parser = MagicMock()
+        parser.can_fetch.return_value = False
+        cache = {}
+        with patch("modes.RobotFileParser", return_value=parser) as parser_cls:
+            assert self.m._robots_allowed(
+                "https://example.com/newsletter", cache
+            ) is False
+            assert self.m._robots_allowed(
+                "https://example.com/another", cache
+            ) is False
+        parser_cls.assert_called_once_with("https://example.com/robots.txt")
+        parser.read.assert_called_once()
 
 
 # ===========================================================================

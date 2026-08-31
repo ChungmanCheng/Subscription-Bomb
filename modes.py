@@ -1,21 +1,43 @@
 """
-modes.py – The four operational modes of the bot:
+modes.py – The operational modes of the bot:
 
-  add_subscription_url   – interactive wizard to register a new URL
+  add_subscription_url   – fully automatic newsletter discovery
+  add_subscription_url_interactive – register a specific URL manually
   modify_subscription_file – list / toggle verified / delete entries
   verify_mode            – test unverified URLs and confirm via IMAP
   attack_mode            – run subscriptions against all verified URLs
 """
+import time
+from urllib.parse import urlsplit, urlunsplit
+from urllib.robotparser import RobotFileParser
+
 from config import EMAILS, IMAP_HOST, IMAP_USER, IMAP_PASS, IMAP_FOLDER, IMAP_TIMEOUT
+from config import (
+    AUTO_SEARCH_QUERIES,
+    AUTO_RESULTS_PER_QUERY,
+    AUTO_MAX_URLS,
+    AUTO_MIN_SEARCH_SCORE,
+    AUTO_FOLLOW_LINKS,
+    AUTO_LINKS_PER_PAGE,
+    AUTO_RESPECT_ROBOTS,
+    AUTO_ROBOTS_USER_AGENT,
+    AUTO_REQUEST_DELAY,
+)
 from storage import load_subscription_urls, save_subscription_urls
 from browser import (
     create_driver,
     subscribe_email,
     fetch_form_elements,
+    find_subscription_links,
     infer_subscription_fields,
     pick_selectors_interactively,
 )
-from search_api import choose_subscription_urls, normalize_subscription_url
+from search_api import (
+    choose_subscription_urls,
+    newsletter_search_query,
+    normalize_subscription_url,
+    search_subscription_urls,
+)
 from imap_utils import get_inbox_uids, check_inbox_for_new_email
 from selector_utils import parse_css_selector_list
 
@@ -38,7 +60,36 @@ def _subscription_entry(url: str, input_fields: dict,
     }
 
 
-def auto_add_subscription_urls(urls: list[str]) -> dict[str, int]:
+def _robots_allowed(url: str, cache: dict[str, RobotFileParser | None]) -> bool:
+    """Return whether robots.txt permits automated discovery of *url*."""
+    parts = urlsplit(url)
+    origin = urlunsplit((parts.scheme, parts.netloc, "", "", ""))
+    if origin not in cache:
+        parser = RobotFileParser(f"{origin}/robots.txt")
+        try:
+            parser.read()
+            cache[origin] = parser
+        except Exception as exc:
+            cache[origin] = None
+            print(f"  Skipped: robots.txt was unreachable ({exc}).")
+    parser = cache[origin]
+    return bool(parser and parser.can_fetch(AUTO_ROBOTS_USER_AGENT, url))
+
+
+def _inspect_newsletter_page(url: str, driver) -> dict | None:
+    """Return inferred fields when *url* contains a coherent newsletter form."""
+    elements = fetch_form_elements(url, driver)
+    fields = infer_subscription_fields(elements)
+    return fields if fields["email"] and fields["submit"] else None
+
+
+def auto_add_subscription_urls(
+    urls: list[str],
+    *,
+    follow_links: bool = AUTO_FOLLOW_LINKS,
+    respect_robots: bool = AUTO_RESPECT_ROBOTS,
+    request_delay: float = AUTO_REQUEST_DELAY,
+) -> dict[str, int]:
     """Inspect and add every valid newsletter URL without further prompts.
 
     Existing and duplicate URLs are skipped. A page is stored only when both
@@ -53,7 +104,13 @@ def auto_add_subscription_urls(urls: list[str]) -> dict[str, int]:
     }
     candidates = []
     seen = set()
-    stats = {"added": 0, "existing": 0, "invalid": 0, "unrecognized": 0}
+    stats = {
+        "added": 0,
+        "existing": 0,
+        "invalid": 0,
+        "unrecognized": 0,
+        "robots": 0,
+    }
 
     for raw_url in urls:
         url = normalize_subscription_url(raw_url)
@@ -69,27 +126,72 @@ def auto_add_subscription_urls(urls: list[str]) -> dict[str, int]:
         return stats
 
     print(f"\nAutomatically inspecting {len(candidates)} URL(s)…")
-    driver = create_driver(headless=True)
+    driver = create_driver(headless=True, discovery=True)
+    robots_cache: dict[str, RobotFileParser | None] = {}
+    pages_inspected = 0
     try:
         for index, url in enumerate(candidates, start=1):
             print(f"[{index}/{len(candidates)}] {url}")
-            try:
-                elements = fetch_form_elements(url, driver)
-                input_fields = infer_subscription_fields(elements)
-            except Exception as exc:
-                stats["unrecognized"] += 1
-                print(f"  Skipped: page inspection failed ({exc}).")
+            if respect_robots and not _robots_allowed(url, robots_cache):
+                stats["robots"] += 1
+                print("  Skipped: disallowed by robots.txt.")
                 continue
-            if not input_fields["email"] or not input_fields["submit"]:
+
+            if pages_inspected and request_delay:
+                time.sleep(request_delay)
+            try:
+                input_fields = _inspect_newsletter_page(url, driver)
+                inspection_failed = False
+            except Exception as exc:
+                print(f"  Skipped: page inspection failed ({exc}).")
+                input_fields = None
+                inspection_failed = True
+            pages_inspected += 1
+
+            resolved_url = url
+            if not input_fields and follow_links and not inspection_failed:
+                links = find_subscription_links(
+                    url, driver, limit=AUTO_LINKS_PER_PAGE
+                )
+                for link in links:
+                    normalized_link = normalize_subscription_url(link)
+                    if not normalized_link or normalized_link in existing:
+                        continue
+                    if respect_robots and not _robots_allowed(
+                        normalized_link, robots_cache
+                    ):
+                        stats["robots"] += 1
+                        continue
+                    if request_delay:
+                        time.sleep(request_delay)
+                    try:
+                        input_fields = _inspect_newsletter_page(
+                            normalized_link, driver
+                        )
+                        pages_inspected += 1
+                    except Exception as exc:
+                        print(
+                            f"  Linked-page inspection failed for "
+                            f"{normalized_link} ({exc})."
+                        )
+                        input_fields = None
+                    if input_fields:
+                        resolved_url = normalized_link
+                        break
+
+            if not input_fields:
                 stats["unrecognized"] += 1
                 print("  Skipped: newsletter email and submit controls not found.")
                 continue
 
-            data.append(_subscription_entry(url, input_fields))
-            existing.add(url)
+            if resolved_url in existing:
+                stats["existing"] += 1
+                continue
+            data.append(_subscription_entry(resolved_url, input_fields))
+            existing.add(resolved_url)
             stats["added"] += 1
             print(
-                f"  Added: {input_fields['email'][0]['css']} -> "
+                f"  Added {resolved_url}: {input_fields['email'][0]['css']} -> "
                 f"{input_fields['submit'][0]['css']}"
             )
     finally:
@@ -104,8 +206,50 @@ def auto_add_subscription_urls(urls: list[str]) -> dict[str, int]:
 
 
 def add_subscription_url() -> None:
+    """Fully automatic, configuration-driven newsletter discovery (Mode 1)."""
+    if not AUTO_SEARCH_QUERIES:
+        print("No AUTO_SEARCH_QUERIES configured in .env.")
+        return
+
+    discovered = []
+    seen = set()
+    for index, topic in enumerate(AUTO_SEARCH_QUERIES, start=1):
+        query = newsletter_search_query(topic)
+        print(f"[Search {index}/{len(AUTO_SEARCH_QUERIES)}] {query}")
+        results = search_subscription_urls(
+            query,
+            limit=AUTO_RESULTS_PER_QUERY,
+            min_score=AUTO_MIN_SEARCH_SCORE,
+        )
+        for url in results:
+            if url not in seen:
+                discovered.append(url)
+                seen.add(url)
+            if len(discovered) >= AUTO_MAX_URLS:
+                break
+        if len(discovered) >= AUTO_MAX_URLS:
+            break
+
+    if not discovered:
+        print("Automatic discovery found no candidate URLs.")
+        return
+
+    print(
+        f"Collected {len(discovered)} unique candidate URL(s) from "
+        f"{len(AUTO_SEARCH_QUERIES)} configured query/queries."
+    )
+    stats = auto_add_subscription_urls(discovered)
+    print(
+        "\nFully automatic discovery complete. "
+        f"Added: {stats['added']}, Existing/duplicate: {stats['existing']}, "
+        f"Invalid: {stats['invalid']}, Robots denied: {stats['robots']}, "
+        f"No form detected: {stats['unrecognized']}"
+    )
+
+
+def add_subscription_url_interactive() -> None:
     """
-    Interactive wizard:
+    Manual/single-result wizard:
       1. Choose one URL, or all results from the Search API
       2. Open browser → scrape all form elements
       3. Automatically infer form fields, with manual mapping as a fallback
@@ -121,7 +265,8 @@ def add_subscription_url() -> None:
         print(
             "\nAutomatic URL import complete. "
             f"Added: {stats['added']}, Existing/duplicate: {stats['existing']}, "
-            f"Invalid: {stats['invalid']}, No form detected: {stats['unrecognized']}"
+            f"Invalid: {stats['invalid']}, Robots denied: {stats['robots']}, "
+            f"No form detected: {stats['unrecognized']}"
         )
         return
 
