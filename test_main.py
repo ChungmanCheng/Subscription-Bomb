@@ -620,7 +620,82 @@ class TestFetchFormElements:
 
 
 # ===========================================================================
-# 12. pick_selectors_interactively
+# 12. infer_subscription_fields
+# ===========================================================================
+
+class TestInferSubscriptionFields:
+    def setup_method(self):
+        self.m = _fresh_import("browser")
+
+    def test_prefers_explicit_email_and_submit_types(self):
+        elements = [
+            {"tag": "input", "type": "text", "name": "name", "selector": "#name"},
+            {"tag": "input", "type": "email", "name": "email", "selector": "#email"},
+            {"tag": "button", "type": "submit", "text": "Send", "selector": "#send"},
+        ]
+        result = self.m.infer_subscription_fields(elements)
+        assert result["email"] == [{"css": "#email"}]
+        assert result["submit"] == [{"css": "#send"}]
+
+    def test_recognises_email_and_subscribe_hints(self):
+        elements = [
+            {"tag": "input", "type": "text", "placeholder": "Your email address", "selector": ".address"},
+            {"tag": "button", "type": "button", "text": "Subscribe now", "selector": ".join"},
+        ]
+        result = self.m.infer_subscription_fields(elements)
+        assert result["email"] == [{"css": ".address"}]
+        assert result["submit"] == [{"css": ".join"}]
+
+    def test_includes_only_required_checkboxes(self):
+        elements = [
+            {"tag": "input", "type": "checkbox", "required": True, "selector": "#consent"},
+            {"tag": "input", "type": "checkbox", "required": False, "selector": "#offers"},
+        ]
+        result = self.m.infer_subscription_fields(elements)
+        assert result["checkboxes"] == [{"css": "#consent"}]
+
+    def test_returns_empty_required_fields_when_not_confident(self):
+        result = self.m.infer_subscription_fields([
+            {"tag": "input", "type": "text", "name": "first_name", "selector": "#name"},
+            {"tag": "button", "type": "button", "text": "Cancel", "selector": "#cancel"},
+        ])
+        assert result["email"] == []
+        assert result["submit"] == []
+
+
+# ===========================================================================
+# 13. add_subscription_url automatic setup
+# ===========================================================================
+
+class TestAddSubscriptionUrlAutomatic:
+    def setup_method(self):
+        self.m = _fresh_import("modes")
+
+    def test_saves_inferred_fields_without_manual_prompts(self, tmp_path):
+        path = tmp_path / "subs.json"
+        path.write_text("[]")
+        driver = MagicMock()
+        elements = [
+            {"tag": "input", "type": "email", "name": "email", "selector": "#email"},
+            {"tag": "button", "type": "submit", "text": "Subscribe", "selector": "#subscribe"},
+        ]
+
+        with patch("storage.URL_JSON", str(path)), \
+             patch("modes.choose_subscription_url", return_value="https://example.com/newsletter"), \
+             patch("modes.create_driver", return_value=driver), \
+             patch("modes.fetch_form_elements", return_value=elements), \
+             patch("builtins.input", return_value=""):
+            self.m.add_subscription_url()
+
+        saved = json.loads(path.read_text())
+        assert saved[0]["url"] == "https://example.com/newsletter"
+        assert saved[0]["input_fields"]["email"] == [{"css": "#email"}]
+        assert saved[0]["input_fields"]["submit"] == [{"css": "#subscribe"}]
+        driver.quit.assert_called_once()
+
+
+# ===========================================================================
+# 14. pick_selectors_interactively
 # ===========================================================================
 
 SAMPLE_ELEMENTS = [

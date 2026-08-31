@@ -12,6 +12,7 @@ from browser import (
     create_driver,
     subscribe_email,
     fetch_form_elements,
+    infer_subscription_fields,
     pick_selectors_interactively,
 )
 from search_api import choose_subscription_url
@@ -28,8 +29,8 @@ def add_subscription_url() -> None:
     Interactive wizard:
       1. Choose URL (manual or Search API)
       2. Open browser → scrape all form elements
-      3. User picks email / submit / checkbox / radio fields by number or CSS
-      4. Collect IMAP verification hints
+      3. Automatically infer form fields, with manual mapping as a fallback
+      4. Optionally collect IMAP verification hints in manual setup
       5. Save as unverified entry in the JSON list
     """
     url = choose_subscription_url()
@@ -44,39 +45,69 @@ def add_subscription_url() -> None:
 
     print("\nOpening browser to inspect form elements…")
     driver = create_driver(headless=False)
-    elements = fetch_form_elements(url, driver)
-    driver.quit()
+    try:
+        elements = fetch_form_elements(url, driver)
+    finally:
+        driver.quit()
 
     if not elements:
         print("No form elements detected – falling back to manual CSS entry.")
 
-    email_els    = [e for e in elements if e["type"] in ("email", "text", "textarea")]
-    submit_els   = [e for e in elements if e["type"] in ("submit", "button") or e["tag"] == "button"]
-    checkbox_els = [e for e in elements if e["type"] == "checkbox"]
-    radio_els    = [e for e in elements if e["type"] == "radio"]
+    setup_mode = input(
+        "Choose form setup: [1] Automatic (recommended), [2] Manual: "
+    ).strip() or "1"
+    input_fields = infer_subscription_fields(elements) if setup_mode != "2" else None
 
-    print("\n=== Assign form fields for this URL ===")
-    print("Enter element number(s) from the table, raw CSS, or press Enter for the default.\n")
+    if input_fields and input_fields["email"] and input_fields["submit"]:
+        print("\nAutomatic form setup complete:")
+        print(f"  Email:  {input_fields['email'][0]['css']}")
+        print(f"  Submit: {input_fields['submit'][0]['css']}")
+        if input_fields["checkboxes"]:
+            print(f"  Required checkbox(es): {len(input_fields['checkboxes'])}")
+        sender_hint = ""
+        subject_hint = ""
+    else:
+        if setup_mode != "2":
+            print("Automatic setup could not confidently identify both fields; using manual setup.")
 
-    email_fields    = pick_selectors_interactively(
-        email_els,    "EMAIL input field(s)",   "input[type='email']")
-    submit_fields   = pick_selectors_interactively(
-        submit_els,   "SUBMIT button(s)",       "button[type='submit'], input[type='submit']")
-    checkbox_fields = pick_selectors_interactively(
-        checkbox_els, "CHECKBOX(es) to tick")
-    radio_fields    = pick_selectors_interactively(
-        radio_els,    "RADIO button(s) to select")
+        email_els    = [e for e in elements if e["type"] in ("email", "text", "textarea")]
+        submit_els   = [e for e in elements if e["type"] in ("submit", "button") or e["tag"] == "button"]
+        checkbox_els = [e for e in elements if e["type"] == "checkbox"]
+        radio_els    = [e for e in elements if e["type"] == "radio"]
 
-    wait_seconds_raw = input("\n  Wait seconds after submit [default 0]: ").strip()
-    try:
-        wait_seconds = int(wait_seconds_raw) if wait_seconds_raw else 0
-    except ValueError:
-        wait_seconds = 0
+        print("\n=== Assign form fields for this URL ===")
+        print("Enter element number(s) from the table, raw CSS, or press Enter for the default.\n")
 
-    print("\n--- IMAP Inbox Verification Hints (optional) ---")
-    print("These help narrow down which email counts as a confirmation.")
-    sender_hint  = input("Sender hint (e.g. noreply@example.com): ").strip()
-    subject_hint = input("Subject hint (e.g. confirm, verify, welcome): ").strip()
+        email_fields    = pick_selectors_interactively(
+            email_els,    "EMAIL input field(s)",   "input[type='email']")
+        submit_fields   = pick_selectors_interactively(
+            submit_els,   "SUBMIT button(s)",       "button[type='submit'], input[type='submit']")
+        checkbox_fields = pick_selectors_interactively(
+            checkbox_els, "CHECKBOX(es) to tick")
+        radio_fields    = pick_selectors_interactively(
+            radio_els,    "RADIO button(s) to select")
+
+        wait_seconds_raw = input("\n  Wait seconds after submit [default 0]: ").strip()
+        try:
+            wait_seconds = max(0, int(wait_seconds_raw)) if wait_seconds_raw else 0
+        except ValueError:
+            wait_seconds = 0
+
+        input_fields = {
+            "email": email_fields,
+            "username": [],
+            "phone": [],
+            "submit": submit_fields,
+            "radios": radio_fields,
+            "checkboxes": checkbox_fields,
+            "selections": [],
+            "wait": wait_seconds,
+        }
+
+        print("\n--- IMAP Inbox Verification Hints (optional) ---")
+        print("These help narrow down which email counts as a confirmation.")
+        sender_hint  = input("Sender hint (e.g. noreply@example.com): ").strip()
+        subject_hint = input("Subject hint (e.g. confirm, verify, welcome): ").strip()
 
     data.append({
         "url": url,
@@ -85,16 +116,7 @@ def add_subscription_url() -> None:
             "sender_hint":  sender_hint,
             "subject_hint": subject_hint,
         },
-        "input_fields": {
-            "email":      email_fields,
-            "username":   [],
-            "phone":      [],
-            "submit":     submit_fields,
-            "radios":     radio_fields,
-            "checkboxes": checkbox_fields,
-            "selections": [],
-            "wait":       wait_seconds,
-        },
+        "input_fields": input_fields,
     })
     save_subscription_urls(data)
     print("URL added successfully as unverified!")

@@ -6,6 +6,7 @@ Responsibilities:
   - Human-like typing (type_with_delay)
   - Form submission   (subscribe_email)
   - Form inspection   (fetch_form_elements, print_elements_table,
+                       infer_subscription_fields,
                        pick_selectors_interactively)
 """
 import time
@@ -126,7 +127,8 @@ def fetch_form_elements(url: str, driver) -> list[dict]:
     form element (input, select, textarea, button).  Hidden inputs are skipped.
 
     Each element is described as a dict with keys:
-        tag, type, id, name, class, placeholder, value, text, selector
+        tag, type, id, name, class, placeholder, autocomplete, required,
+        value, text, selector
     The *selector* is the most specific CSS selector derivable from the element.
     """
     try:
@@ -149,6 +151,9 @@ def fetch_form_elements(url: str, driver) -> list[dict]:
                 el_name        = el.get_attribute("name") or ""
                 el_class       = (el.get_attribute("class") or "").strip()
                 el_placeholder = el.get_attribute("placeholder") or ""
+                el_autocomplete = el.get_attribute("autocomplete") or ""
+                required_attr   = el.get_attribute("required")
+                el_required     = bool(required_attr) and str(required_attr).lower() != "false"
                 el_value       = el.get_attribute("value") or ""
                 el_text        = (el.text or "").strip()[:50]
 
@@ -171,6 +176,8 @@ def fetch_form_elements(url: str, driver) -> list[dict]:
                     "name":        el_name,
                     "class":       el_class,
                     "placeholder": el_placeholder,
+                    "autocomplete": el_autocomplete,
+                    "required":    el_required,
                     "value":       el_value,
                     "text":        el_text,
                     "selector":    css,
@@ -178,6 +185,81 @@ def fetch_form_elements(url: str, driver) -> list[dict]:
             except Exception:
                 continue
     return elements
+
+
+def infer_subscription_fields(elements: list[dict]) -> dict:
+    """Infer a newsletter form configuration from scraped elements.
+
+    The highest-confidence email and submit controls are selected. Required
+    consent checkboxes are included, while radio buttons are deliberately left
+    for manual configuration because choosing an arbitrary option is unsafe.
+
+    An empty ``email`` or ``submit`` list means automatic setup was not
+    confident enough and the caller should fall back to manual selection.
+    """
+    def text_for(element: dict) -> str:
+        keys = (
+            "id", "name", "class", "placeholder", "autocomplete",
+            "value", "text",
+        )
+        return " ".join(str(element.get(key, "")) for key in keys).lower()
+
+    def selector_for(element: dict) -> list[dict]:
+        selector = str(element.get("selector", "")).strip()
+        return [{"css": selector}] if selector else []
+
+    email_candidates = []
+    submit_candidates = []
+    consent_checkboxes = []
+
+    for index, element in enumerate(elements):
+        tag = str(element.get("tag", "")).lower()
+        field_type = str(element.get("type", "")).lower()
+        text = text_for(element)
+
+        if field_type in ("email", "text") or tag == "textarea":
+            email_score = 0
+            if field_type == "email":
+                email_score += 100
+            if element.get("autocomplete", "").lower() == "email":
+                email_score += 80
+            if "email" in text or "e-mail" in text:
+                email_score += 60
+            if "newsletter" in text or "subscribe" in text:
+                email_score += 20
+            if email_score:
+                email_candidates.append((email_score, -index, element))
+
+        if field_type != "reset" and (tag in ("button", "input")):
+            submit_score = 0
+            if field_type == "submit":
+                submit_score += 100
+            if any(term in text for term in (
+                "subscribe", "sign up", "signup", "join", "newsletter",
+                "register", "get updates",
+            )):
+                submit_score += 60
+            if tag == "button":
+                submit_score += 10
+            if submit_score >= 60:
+                submit_candidates.append((submit_score, -index, element))
+
+        if field_type == "checkbox" and element.get("required"):
+            consent_checkboxes.extend(selector_for(element))
+
+    email_candidates.sort(reverse=True, key=lambda item: (item[0], item[1]))
+    submit_candidates.sort(reverse=True, key=lambda item: (item[0], item[1]))
+
+    return {
+        "email": selector_for(email_candidates[0][2]) if email_candidates else [],
+        "username": [],
+        "phone": [],
+        "submit": selector_for(submit_candidates[0][2]) if submit_candidates else [],
+        "radios": [],
+        "checkboxes": consent_checkboxes,
+        "selections": [],
+        "wait": 0,
+    }
 
 
 def print_elements_table(elements: list[dict]) -> None:

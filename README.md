@@ -93,7 +93,15 @@ Adds a new subscription form URL to `email_subscription.json`.
 1. Choose the URL source:
    - **[1] Manual** – paste the URL directly
    - **[2] Search API** – enter a search query; pick from results
-2. Enter CSS selectors for the form fields:
+2. Choose a form setup method:
+   - **[1] Automatic (default)** – detects the email field, subscribe button,
+     and required consent checkboxes, then saves the entry immediately
+   - **[2] Manual** – enter or select CSS selectors for the form fields
+
+Automatic setup falls back to manual mapping when it cannot confidently find
+both an email field and a submit control.
+
+In manual setup, configure these fields:
    | Prompt | Default |
    |---|---|
    | Email field | `input[type='email']` |
